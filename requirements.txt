@@ -1,0 +1,5 @@
+cmake>=3.25.0
+ninja>=1.11.0
+pytest>=8.0.0
+numpy>=1.26.0
+pandas>=2.2.0

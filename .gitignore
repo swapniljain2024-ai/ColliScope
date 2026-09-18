@@ -1,0 +1,47 @@
+# Build artifacts
+build/
+bin/
+lib/
+cmake-build-*/
+CMakeUserPresets.json
+.cache/
+
+# C++ Object files & executables
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+
+# IDE and Editor artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Results / experiment data (keep directory structure with .gitkeep)
+results/*
+!results/.gitkeep
+!results/**/.gitkeep
