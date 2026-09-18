@@ -4,3 +4,10 @@
 # Shared include directory for all submodules
 add_library(colliscope_interface INTERFACE)
 target_include_directories(colliscope_interface INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# SVC-Hash algorithm library (Phase 2)
+add_library(colliscope_svc_hash STATIC
+    svc_hash/svc_hash_table.cpp
+)
+target_link_libraries(colliscope_svc_hash PUBLIC colliscope_interface)
+
