@@ -104,6 +104,10 @@ To ensure fair and interpretable evaluation without contaminating baseline perfo
 2. **No Scope Contamination in Baselines**:
    We **never** retroactively inject cuckoo-specific or SVC-specific scope-tombstoning logic into baseline chaining or hopscotch algorithms. Baselines represent their true, canonical computer science definitions.
 
+3. **Optional Algorithm Exclusion Decision (Coalesced Hashing)**:
+   Per Step 5 of the Master Agent Execution Manual, optional Coalesced Hashing is skipped to focus experimental resources strictly on the three canonical primary baseline families (Separate Chaining, Plain Cuckoo Hashing, Hopscotch Hashing) and prevent schedule/implementation risk. Linear Probing, Quadratic Probing, Double Hashing, and Robin Hood Hashing remain explicitly excluded.
+
+
 ---
 
 ## 4. Configuration Contract
