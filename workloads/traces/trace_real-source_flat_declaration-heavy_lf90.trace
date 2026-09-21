@@ -1,0 +1,1005 @@
+# ColliScope Real-Source Trace (AST-Derived Modeled Symbol Table Trace)
+# Source: cJSON.c, Scope: flat
+# In-Unit Declarations: 123, External Symbols: 42 (225 refs)
+# Total References: 876, Total Scopes: 1
+ENTER_SCOPE 0
+DECLARE next 1 0
+DECLARE prev 1 0
+DECLARE child 1 0
+DECLARE type 1 0
+DECLARE valuestring 1 0
+DECLARE valueint 1 0
+DECLARE valuedouble 1 0
+DECLARE string 1 0
+DECLARE malloc_fn 1 0
+DECLARE free_fn 1 0
+DECLARE content 1 0
+DECLARE length 1 0
+DECLARE offset 1 0
+DECLARE depth 1 0
+DECLARE hooks 1 0
+DECLARE buffer 1 0
+DECLARE noalloc 1 0
+DECLARE format 1 0
+DECLARE allocate 1 0
+DECLARE deallocate 1 0
+DECLARE reallocate 1 0
+DECLARE json 1 0
+DECLARE position 1 0
+DECLARE global_error 1 0
+REFERENCE NULL 0
+DECLARE cJSON_GetErrorPtr 1 0
+REFERENCE global_error 0
+REFERENCE global_error 0
+DECLARE cJSON_GetStringValue 1 0
+DECLARE item 2 0
+REFERENCE cJSON_IsString 0
+REFERENCE item 0
+REFERENCE NULL 0
+REFERENCE item 0
+DECLARE cJSON_GetNumberValue 1 0
+REFERENCE cJSON_IsNumber 0
+REFERENCE item 0
+REFERENCE NAN 0
+REFERENCE item 0
+DECLARE cJSON_Version 1 0
+DECLARE version 1 0
+REFERENCE sprintf 0
+REFERENCE version 0
+REFERENCE CJSON_VERSION_MAJOR 0
+REFERENCE CJSON_VERSION_MINOR 0
+REFERENCE CJSON_VERSION_PATCH 0
+REFERENCE version 0
+DECLARE case_insensitive_strcmp 1 0
+DECLARE string1 2 0
+DECLARE string2 2 0
+REFERENCE string1 0
+REFERENCE NULL 0
+REFERENCE string2 0
+REFERENCE NULL 0
+REFERENCE string1 0
+REFERENCE string2 0
+REFERENCE tolower 0
+REFERENCE string1 0
+REFERENCE tolower 0
+REFERENCE string2 0
+REFERENCE string1 0
+REFERENCE string2 0
+REFERENCE string1 0
+REFERENCE tolower 0
+REFERENCE string1 0
+REFERENCE tolower 0
+REFERENCE string2 0
+DECLARE internal_malloc 1 0
+DECLARE size 2 0
+REFERENCE malloc 0
+REFERENCE size 0
+DECLARE internal_free 1 0
+DECLARE pointer 2 0
+REFERENCE free 0
+REFERENCE pointer 0
+DECLARE internal_realloc 1 0
+REFERENCE realloc 0
+REFERENCE pointer 0
+REFERENCE size 0
+DECLARE global_hooks 1 0
+REFERENCE internal_malloc 0
+REFERENCE internal_free 0
+REFERENCE internal_realloc 0
+DECLARE cJSON_strdup 1 0
+DECLARE copy 1 0
+REFERENCE NULL 0
+REFERENCE string 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE length 0
+REFERENCE strlen 0
+REFERENCE string 0
+REFERENCE copy 0
+REFERENCE hooks 0
+REFERENCE length 0
+REFERENCE copy 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE memcpy 0
+REFERENCE copy 0
+REFERENCE string 0
+REFERENCE length 0
+REFERENCE copy 0
+DECLARE cJSON_InitHooks 1 0
+REFERENCE hooks 0
+REFERENCE NULL 0
+REFERENCE global_hooks 0
+REFERENCE malloc 0
+REFERENCE global_hooks 0
+REFERENCE free 0
+REFERENCE global_hooks 0
+REFERENCE realloc 0
+REFERENCE global_hooks 0
+REFERENCE malloc 0
+REFERENCE hooks 0
+REFERENCE NULL 0
+REFERENCE global_hooks 0
+REFERENCE hooks 0
+REFERENCE global_hooks 0
+REFERENCE free 0
+REFERENCE hooks 0
+REFERENCE NULL 0
+REFERENCE global_hooks 0
+REFERENCE hooks 0
+REFERENCE global_hooks 0
+REFERENCE NULL 0
+REFERENCE global_hooks 0
+REFERENCE malloc 0
+REFERENCE global_hooks 0
+REFERENCE free 0
+REFERENCE global_hooks 0
+REFERENCE realloc 0
+DECLARE cJSON_New_Item 1 0
+DECLARE node 1 0
+REFERENCE hooks 0
+REFERENCE node 0
+REFERENCE memset 0
+REFERENCE node 0
+REFERENCE node 0
+DECLARE cJSON_Delete 1 0
+REFERENCE NULL 0
+REFERENCE item 0
+REFERENCE NULL 0
+REFERENCE next 0
+REFERENCE item 0
+REFERENCE item 0
+REFERENCE cJSON_IsReference 0
+REFERENCE item 0
+REFERENCE NULL 0
+REFERENCE cJSON_Delete 0
+REFERENCE item 0
+REFERENCE item 0
+REFERENCE cJSON_IsReference 0
+REFERENCE item 0
+REFERENCE NULL 0
+REFERENCE global_hooks 0
+REFERENCE item 0
+REFERENCE item 0
+REFERENCE NULL 0
+REFERENCE item 0
+REFERENCE cJSON_StringIsConst 0
+REFERENCE item 0
+REFERENCE NULL 0
+REFERENCE global_hooks 0
+REFERENCE item 0
+REFERENCE item 0
+REFERENCE NULL 0
+REFERENCE global_hooks 0
+REFERENCE item 0
+REFERENCE item 0
+REFERENCE next 0
+DECLARE get_decimal_point 1 0
+DECLARE lconv 1 0
+REFERENCE localeconv 0
+REFERENCE lconv 0
+DECLARE parse_number 1 0
+DECLARE input_buffer 2 0
+DECLARE number 1 0
+DECLARE after_end 1 0
+REFERENCE NULL 0
+DECLARE number_c_string 1 0
+DECLARE decimal_point 1 0
+REFERENCE get_decimal_point 0
+DECLARE i 1 0
+REFERENCE input_buffer 0
+REFERENCE NULL 0
+REFERENCE input_buffer 0
+REFERENCE NULL 0
+REFERENCE false 0
+REFERENCE i 0
+REFERENCE i 0
+REFERENCE number_c_string 0
+REFERENCE can_access_at_index 0
+REFERENCE input_buffer 0
+REFERENCE i 0
+REFERENCE i 0
+REFERENCE buffer_at_offset 0
+REFERENCE input_buffer 0
+REFERENCE i 0
+REFERENCE number_c_string 0
+REFERENCE i 0
+REFERENCE buffer_at_offset 0
+REFERENCE input_buffer 0
+REFERENCE i 0
+REFERENCE number_c_string 0
+REFERENCE i 0
+REFERENCE decimal_point 0
+REFERENCE number_c_string 0
+REFERENCE i 0
+REFERENCE number 0
+REFERENCE strtod 0
+REFERENCE number_c_string 0
+REFERENCE after_end 0
+REFERENCE number_c_string 0
+REFERENCE after_end 0
+REFERENCE false 0
+REFERENCE item 0
+REFERENCE number 0
+REFERENCE number 0
+REFERENCE INT_MAX 0
+REFERENCE item 0
+REFERENCE INT_MAX 0
+REFERENCE number 0
+REFERENCE INT_MIN 0
+REFERENCE item 0
+REFERENCE INT_MIN 0
+REFERENCE item 0
+REFERENCE number 0
+REFERENCE item 0
+REFERENCE cJSON_Number 0
+REFERENCE input_buffer 0
+REFERENCE after_end 0
+REFERENCE number_c_string 0
+REFERENCE true 0
+DECLARE cJSON_SetNumberHelper 1 0
+DECLARE object 2 0
+REFERENCE number 0
+REFERENCE INT_MAX 0
+REFERENCE object 0
+REFERENCE INT_MAX 0
+REFERENCE number 0
+REFERENCE INT_MIN 0
+REFERENCE object 0
+REFERENCE INT_MIN 0
+REFERENCE object 0
+REFERENCE number 0
+REFERENCE object 0
+REFERENCE number 0
+DECLARE cJSON_SetValuestring 1 0
+REFERENCE NULL 0
+REFERENCE object 0
+REFERENCE NULL 0
+REFERENCE object 0
+REFERENCE cJSON_String 0
+REFERENCE object 0
+REFERENCE cJSON_IsReference 0
+REFERENCE NULL 0
+REFERENCE object 0
+REFERENCE NULL 0
+REFERENCE valuestring 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE strlen 0
+REFERENCE valuestring 0
+REFERENCE strlen 0
+REFERENCE object 0
+REFERENCE strcpy 0
+REFERENCE object 0
+REFERENCE valuestring 0
+REFERENCE object 0
+REFERENCE copy 0
+REFERENCE cJSON_strdup 0
+REFERENCE valuestring 0
+REFERENCE global_hooks 0
+REFERENCE copy 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE object 0
+REFERENCE NULL 0
+REFERENCE cJSON_free 0
+REFERENCE object 0
+REFERENCE object 0
+REFERENCE copy 0
+REFERENCE copy 0
+DECLARE ensure 1 0
+DECLARE p 2 0
+DECLARE needed 2 0
+DECLARE newbuffer 1 0
+REFERENCE NULL 0
+DECLARE newsize 1 0
+REFERENCE p 0
+REFERENCE NULL 0
+REFERENCE p 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE NULL 0
+REFERENCE needed 0
+REFERENCE INT_MAX 0
+REFERENCE NULL 0
+REFERENCE needed 0
+REFERENCE p 0
+REFERENCE needed 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE NULL 0
+REFERENCE needed 0
+REFERENCE INT_MAX 0
+REFERENCE needed 0
+REFERENCE INT_MAX 0
+REFERENCE newsize 0
+REFERENCE INT_MAX 0
+REFERENCE NULL 0
+REFERENCE newsize 0
+REFERENCE needed 0
+REFERENCE p 0
+REFERENCE NULL 0
+REFERENCE newbuffer 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE newsize 0
+REFERENCE newbuffer 0
+REFERENCE NULL 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE newbuffer 0
+REFERENCE p 0
+REFERENCE newsize 0
+REFERENCE newbuffer 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE memcpy 0
+REFERENCE newbuffer 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE newsize 0
+REFERENCE p 0
+REFERENCE newbuffer 0
+REFERENCE newbuffer 0
+REFERENCE p 0
+DECLARE update_offset 1 0
+DECLARE buffer_pointer 1 0
+REFERENCE NULL 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE buffer_pointer 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE strlen 0
+REFERENCE buffer_pointer 0
+DECLARE compare_double 1 0
+DECLARE a 2 0
+DECLARE b 2 0
+DECLARE maxVal 1 0
+REFERENCE fabs 0
+REFERENCE a 0
+REFERENCE fabs 0
+REFERENCE b 0
+REFERENCE fabs 0
+REFERENCE a 0
+REFERENCE fabs 0
+REFERENCE b 0
+REFERENCE fabs 0
+REFERENCE a 0
+REFERENCE b 0
+REFERENCE maxVal 0
+REFERENCE DBL_EPSILON 0
+DECLARE print_number 1 0
+DECLARE output_buffer 2 0
+DECLARE output_pointer 1 0
+REFERENCE NULL 0
+DECLARE d 1 0
+REFERENCE item 0
+DECLARE number_buffer 1 0
+REFERENCE get_decimal_point 0
+DECLARE test 1 0
+REFERENCE output_buffer 0
+REFERENCE NULL 0
+REFERENCE false 0
+REFERENCE isnan 0
+REFERENCE d 0
+REFERENCE isinf 0
+REFERENCE d 0
+REFERENCE length 0
+REFERENCE sprintf 0
+REFERENCE number_buffer 0
+REFERENCE d 0
+REFERENCE item 0
+REFERENCE length 0
+REFERENCE sprintf 0
+REFERENCE number_buffer 0
+REFERENCE item 0
+REFERENCE length 0
+REFERENCE sprintf 0
+REFERENCE number_buffer 0
+REFERENCE d 0
+REFERENCE sscanf 0
+REFERENCE number_buffer 0
+REFERENCE test 0
+REFERENCE compare_double 0
+REFERENCE test 0
+REFERENCE d 0
+REFERENCE length 0
+REFERENCE sprintf 0
+REFERENCE number_buffer 0
+REFERENCE d 0
+REFERENCE length 0
+REFERENCE length 0
+REFERENCE number_buffer 0
+REFERENCE false 0
+REFERENCE output_pointer 0
+REFERENCE ensure 0
+REFERENCE output_buffer 0
+REFERENCE length 0
+REFERENCE output_pointer 0
+REFERENCE NULL 0
+REFERENCE false 0
+REFERENCE i 0
+REFERENCE i 0
+REFERENCE length 0
+REFERENCE i 0
+REFERENCE number_buffer 0
+REFERENCE i 0
+REFERENCE decimal_point 0
+REFERENCE output_pointer 0
+REFERENCE i 0
+REFERENCE output_pointer 0
+REFERENCE i 0
+REFERENCE number_buffer 0
+REFERENCE i 0
+REFERENCE output_pointer 0
+REFERENCE i 0
+REFERENCE output_buffer 0
+REFERENCE length 0
+REFERENCE true 0
+DECLARE parse_hex4 1 0
+DECLARE input 2 0
+DECLARE h 1 0
+REFERENCE i 0
+REFERENCE i 0
+REFERENCE i 0
+REFERENCE input 0
+REFERENCE i 0
+REFERENCE input 0
+REFERENCE i 0
+REFERENCE h 0
+REFERENCE input 0
+REFERENCE i 0
+REFERENCE input 0
+REFERENCE i 0
+REFERENCE input 0
+REFERENCE i 0
+REFERENCE h 0
+REFERENCE input 0
+REFERENCE i 0
+REFERENCE input 0
+REFERENCE i 0
+REFERENCE input 0
+REFERENCE i 0
+REFERENCE h 0
+REFERENCE input 0
+REFERENCE i 0
+REFERENCE i 0
+REFERENCE h 0
+REFERENCE h 0
+REFERENCE h 0
+DECLARE utf16_literal_to_utf8 1 0
+DECLARE input_pointer 2 0
+DECLARE input_end 2 0
+DECLARE codepoint 1 0
+DECLARE first_code 1 0
+DECLARE first_sequence 1 0
+REFERENCE input_pointer 0
+DECLARE utf8_length 1 0
+DECLARE utf8_position 1 0
+DECLARE sequence_length 1 0
+DECLARE first_byte_mark 1 0
+REFERENCE input_end 0
+REFERENCE first_sequence 0
+REFERENCE first_code 0
+REFERENCE parse_hex4 0
+REFERENCE first_sequence 0
+REFERENCE first_code 0
+REFERENCE first_code 0
+REFERENCE first_code 0
+REFERENCE first_code 0
+DECLARE second_sequence 1 0
+REFERENCE first_sequence 0
+DECLARE second_code 1 0
+REFERENCE sequence_length 0
+REFERENCE input_end 0
+REFERENCE second_sequence 0
+REFERENCE second_sequence 0
+REFERENCE second_sequence 0
+REFERENCE second_code 0
+REFERENCE parse_hex4 0
+REFERENCE second_sequence 0
+REFERENCE second_code 0
+REFERENCE second_code 0
+REFERENCE codepoint 0
+REFERENCE first_code 0
+REFERENCE second_code 0
+REFERENCE sequence_length 0
+REFERENCE codepoint 0
+REFERENCE first_code 0
+REFERENCE codepoint 0
+REFERENCE utf8_length 0
+REFERENCE codepoint 0
+REFERENCE utf8_length 0
+REFERENCE first_byte_mark 0
+REFERENCE codepoint 0
+REFERENCE utf8_length 0
+REFERENCE first_byte_mark 0
+REFERENCE codepoint 0
+REFERENCE utf8_length 0
+REFERENCE first_byte_mark 0
+REFERENCE utf8_position 0
+REFERENCE utf8_length 0
+REFERENCE utf8_position 0
+REFERENCE utf8_position 0
+REFERENCE output_pointer 0
+REFERENCE utf8_position 0
+REFERENCE codepoint 0
+REFERENCE codepoint 0
+REFERENCE utf8_length 0
+REFERENCE output_pointer 0
+REFERENCE codepoint 0
+REFERENCE first_byte_mark 0
+REFERENCE output_pointer 0
+REFERENCE codepoint 0
+REFERENCE output_pointer 0
+REFERENCE utf8_length 0
+REFERENCE sequence_length 0
+DECLARE parse_string 1 0
+REFERENCE buffer_at_offset 0
+REFERENCE input_buffer 0
+REFERENCE buffer_at_offset 0
+REFERENCE input_buffer 0
+REFERENCE NULL 0
+DECLARE output 1 0
+REFERENCE NULL 0
+REFERENCE buffer_at_offset 0
+REFERENCE input_buffer 0
+DECLARE allocation_length 1 0
+DECLARE skipped_bytes 1 0
+REFERENCE input_end 0
+REFERENCE input_buffer 0
+REFERENCE input_buffer 0
+REFERENCE input_end 0
+REFERENCE input_end 0
+REFERENCE input_end 0
+REFERENCE input_buffer 0
+REFERENCE input_buffer 0
+REFERENCE skipped_bytes 0
+REFERENCE input_end 0
+REFERENCE input_end 0
+REFERENCE input_end 0
+REFERENCE input_buffer 0
+REFERENCE input_buffer 0
+REFERENCE input_end 0
+REFERENCE allocation_length 0
+REFERENCE input_end 0
+REFERENCE buffer_at_offset 0
+REFERENCE input_buffer 0
+REFERENCE skipped_bytes 0
+REFERENCE output 0
+REFERENCE input_buffer 0
+REFERENCE allocation_length 0
+REFERENCE output 0
+REFERENCE NULL 0
+REFERENCE output_pointer 0
+REFERENCE output 0
+REFERENCE input_pointer 0
+REFERENCE input_end 0
+REFERENCE input_pointer 0
+REFERENCE output_pointer 0
+REFERENCE input_pointer 0
+REFERENCE input_end 0
+REFERENCE input_pointer 0
+REFERENCE input_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE input_pointer 0
+REFERENCE sequence_length 0
+REFERENCE utf16_literal_to_utf8 0
+REFERENCE input_pointer 0
+REFERENCE input_end 0
+REFERENCE output_pointer 0
+REFERENCE sequence_length 0
+REFERENCE input_pointer 0
+REFERENCE sequence_length 0
+REFERENCE output_pointer 0
+REFERENCE item 0
+REFERENCE cJSON_String 0
+REFERENCE item 0
+REFERENCE output 0
+REFERENCE input_buffer 0
+REFERENCE input_end 0
+REFERENCE input_buffer 0
+REFERENCE input_buffer 0
+REFERENCE true 0
+REFERENCE output 0
+REFERENCE NULL 0
+REFERENCE input_buffer 0
+REFERENCE output 0
+REFERENCE output 0
+REFERENCE NULL 0
+REFERENCE input_pointer 0
+REFERENCE NULL 0
+REFERENCE input_buffer 0
+REFERENCE input_pointer 0
+REFERENCE input_buffer 0
+REFERENCE false 0
+DECLARE print_string_ptr 1 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+DECLARE output_length 1 0
+DECLARE escape_characters 1 0
+REFERENCE output_buffer 0
+REFERENCE NULL 0
+REFERENCE false 0
+REFERENCE input 0
+REFERENCE NULL 0
+REFERENCE output 0
+REFERENCE ensure 0
+REFERENCE output_buffer 0
+REFERENCE output 0
+REFERENCE NULL 0
+REFERENCE false 0
+REFERENCE strcpy 0
+REFERENCE output 0
+REFERENCE true 0
+REFERENCE input_pointer 0
+REFERENCE input 0
+REFERENCE input_pointer 0
+REFERENCE input_pointer 0
+REFERENCE input_pointer 0
+REFERENCE escape_characters 0
+REFERENCE input_pointer 0
+REFERENCE escape_characters 0
+REFERENCE output_length 0
+REFERENCE input_pointer 0
+REFERENCE input 0
+REFERENCE escape_characters 0
+REFERENCE output 0
+REFERENCE ensure 0
+REFERENCE output_buffer 0
+REFERENCE output_length 0
+REFERENCE output 0
+REFERENCE NULL 0
+REFERENCE false 0
+REFERENCE escape_characters 0
+REFERENCE output 0
+REFERENCE memcpy 0
+REFERENCE output 0
+REFERENCE input 0
+REFERENCE output_length 0
+REFERENCE output 0
+REFERENCE output_length 0
+REFERENCE output 0
+REFERENCE output_length 0
+REFERENCE true 0
+REFERENCE output 0
+REFERENCE output_pointer 0
+REFERENCE output 0
+REFERENCE input_pointer 0
+REFERENCE input 0
+REFERENCE input_pointer 0
+REFERENCE input_pointer 0
+REFERENCE output_pointer 0
+REFERENCE input_pointer 0
+REFERENCE input_pointer 0
+REFERENCE input_pointer 0
+REFERENCE output_pointer 0
+REFERENCE input_pointer 0
+REFERENCE output_pointer 0
+REFERENCE input_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output_pointer 0
+REFERENCE sprintf 0
+REFERENCE output_pointer 0
+REFERENCE input_pointer 0
+REFERENCE output_pointer 0
+REFERENCE output 0
+REFERENCE output_length 0
+REFERENCE output 0
+REFERENCE output_length 0
+REFERENCE true 0
+DECLARE print_string 1 0
+REFERENCE print_string_ptr 0
+REFERENCE item 0
+REFERENCE p 0
+DECLARE parse_value 1 0
+DECLARE print_value 1 0
+DECLARE parse_array 1 0
+DECLARE print_array 1 0
+DECLARE parse_object 1 0
+DECLARE print_object 1 0
+DECLARE buffer_skip_whitespace 1 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE cannot_access_at_index 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE can_access_at_index 0
+REFERENCE buffer 0
+REFERENCE buffer_at_offset 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+DECLARE skip_utf8_bom 1 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE can_access_at_index 0
+REFERENCE buffer 0
+REFERENCE strncmp 0
+REFERENCE buffer_at_offset 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+DECLARE cJSON_ParseWithOpts 1 0
+DECLARE value 2 0
+DECLARE return_parse_end 2 0
+DECLARE require_null_terminated 2 0
+DECLARE buffer_length 1 0
+REFERENCE NULL 0
+REFERENCE value 0
+REFERENCE NULL 0
+REFERENCE buffer_length 0
+REFERENCE strlen 0
+REFERENCE value 0
+REFERENCE cJSON_ParseWithLengthOpts 0
+REFERENCE value 0
+REFERENCE buffer_length 0
+REFERENCE return_parse_end 0
+REFERENCE require_null_terminated 0
+DECLARE cJSON_ParseWithLengthOpts 1 0
+REFERENCE NULL 0
+REFERENCE global_error 0
+REFERENCE NULL 0
+REFERENCE global_error 0
+REFERENCE value 0
+REFERENCE NULL 0
+REFERENCE buffer_length 0
+REFERENCE buffer 0
+REFERENCE value 0
+REFERENCE buffer 0
+REFERENCE buffer_length 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE global_hooks 0
+REFERENCE item 0
+REFERENCE cJSON_New_Item 0
+REFERENCE global_hooks 0
+REFERENCE item 0
+REFERENCE NULL 0
+REFERENCE parse_value 0
+REFERENCE item 0
+REFERENCE buffer_skip_whitespace 0
+REFERENCE skip_utf8_bom 0
+REFERENCE buffer 0
+REFERENCE require_null_terminated 0
+REFERENCE buffer_skip_whitespace 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE buffer_at_offset 0
+REFERENCE buffer 0
+REFERENCE return_parse_end 0
+REFERENCE return_parse_end 0
+REFERENCE buffer_at_offset 0
+REFERENCE buffer 0
+REFERENCE item 0
+REFERENCE item 0
+REFERENCE NULL 0
+REFERENCE cJSON_Delete 0
+REFERENCE item 0
+REFERENCE value 0
+REFERENCE NULL 0
+DECLARE local_error 1 0
+REFERENCE local_error 0
+REFERENCE value 0
+REFERENCE local_error 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE local_error 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE local_error 0
+REFERENCE buffer 0
+REFERENCE return_parse_end 0
+REFERENCE NULL 0
+REFERENCE return_parse_end 0
+REFERENCE local_error 0
+REFERENCE local_error 0
+REFERENCE global_error 0
+REFERENCE local_error 0
+REFERENCE NULL 0
+DECLARE cJSON_Parse 1 0
+REFERENCE cJSON_ParseWithOpts 0
+REFERENCE value 0
+DECLARE cJSON_ParseWithLength 1 0
+REFERENCE cJSON_ParseWithLengthOpts 0
+REFERENCE value 0
+REFERENCE buffer_length 0
+DECLARE print 1 0
+DECLARE default_buffer_size 1 0
+DECLARE printed 1 0
+REFERENCE NULL 0
+REFERENCE memset 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE hooks 0
+REFERENCE default_buffer_size 0
+REFERENCE buffer 0
+REFERENCE default_buffer_size 0
+REFERENCE buffer 0
+REFERENCE format 0
+REFERENCE buffer 0
+REFERENCE hooks 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE print_value 0
+REFERENCE item 0
+REFERENCE buffer 0
+REFERENCE update_offset 0
+REFERENCE buffer 0
+REFERENCE hooks 0
+REFERENCE NULL 0
+REFERENCE printed 0
+REFERENCE hooks 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE printed 0
+REFERENCE NULL 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE printed 0
+REFERENCE hooks 0
+REFERENCE buffer 0
+REFERENCE printed 0
+REFERENCE NULL 0
+REFERENCE memcpy 0
+REFERENCE printed 0
+REFERENCE buffer 0
+REFERENCE cjson_min 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE printed 0
+REFERENCE buffer 0
+REFERENCE hooks 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE printed 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE hooks 0
+REFERENCE buffer 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE printed 0
+REFERENCE NULL 0
+REFERENCE hooks 0
+REFERENCE printed 0
+REFERENCE printed 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+DECLARE cJSON_Print 1 0
+REFERENCE print 0
+REFERENCE item 0
+REFERENCE true 0
+REFERENCE global_hooks 0
+DECLARE cJSON_PrintUnformatted 1 0
+REFERENCE print 0
+REFERENCE item 0
+REFERENCE false 0
+REFERENCE global_hooks 0
+DECLARE cJSON_PrintBuffered 1 0
+DECLARE prebuffer 2 0
+DECLARE fmt 2 0
+REFERENCE prebuffer 0
+REFERENCE NULL 0
+REFERENCE p 0
+REFERENCE global_hooks 0
+REFERENCE prebuffer 0
+REFERENCE p 0
+REFERENCE NULL 0
+REFERENCE p 0
+REFERENCE prebuffer 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE false 0
+REFERENCE p 0
+REFERENCE fmt 0
+REFERENCE p 0
+REFERENCE global_hooks 0
+REFERENCE print_value 0
+REFERENCE item 0
+REFERENCE p 0
+REFERENCE global_hooks 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE NULL 0
+REFERENCE NULL 0
+REFERENCE p 0
+DECLARE cJSON_PrintPreallocated 1 0
+REFERENCE length 0
+REFERENCE buffer 0
+REFERENCE NULL 0
+REFERENCE false 0
+REFERENCE p 0
+REFERENCE buffer 0
+REFERENCE p 0
+REFERENCE length 0
+REFERENCE p 0
+REFERENCE p 0
+REFERENCE true 0
+REFERENCE p 0
+REFERENCE format 0
+REFERENCE p 0
+REFERENCE global_hooks 0
+REFERENCE print_value 0
+REFERENCE item 0
+REFERENCE p 0
+REFERENCE input_buffer 0
+REFERENCE NULL 0
+REFERENCE input_buffer 0
+REFERENCE NULL 0
+REFERENCE false 0
+REFERENCE can_read 0
+REFERENCE input_buffer 0
+REFERENCE strncmp 0
+REFERENCE buffer_at_offset 0
+REFERENCE input_buffer 0
+REFERENCE item 0
+REFERENCE cJSON_NULL 0
+REFERENCE input_buffer 0
+REFERENCE true 0
+REFERENCE can_read 0
+REFERENCE input_buffer 0
+REFERENCE strncmp 0
+REFERENCE buffer_at_offset 0
+REFERENCE input_buffer 0
+REFERENCE item 0
+REFERENCE cJSON_False 0
+REFERENCE input_buffer 0
+REFERENCE true 0
+REFERENCE can_read 0
+REFERENCE input_buffer 0
+REFERENCE strncmp 0
+REFERENCE buffer_at_offset 0
+REFERENCE input_buffer 0
+REFERENCE item 0
+REFERENCE cJSON_True 0
+REFERENCE item 0
+REFERENCE input_buffer 0
+REFERENCE true 0
+REFERENCE can_access_at_index 0
+REFERENCE input_buffer 0
+EXIT_SCOPE 0
