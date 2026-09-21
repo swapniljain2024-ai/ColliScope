@@ -1,6 +1,6 @@
 # ColliScope: Execution Trace Format Contract
 
-**Document Version:** 1.0.0 (Phase 1)  
+**Document Version:** 1.1.0 (Phase 4 — Reconciled with Phase 2 Duplicate Declaration Contract)  
 **Status:** Binding Specification & Contract  
 **Related Components:** `workloads/traces/`, `src/common/trace_parser.hpp`, `benchmarks/`
 
@@ -51,7 +51,7 @@ WS              ::= { " " | "\t" }+
 ### `DECLARE <identifier> [type_id] [scope_id]`
 - Declares the symbol `identifier` in the specified `scope_id` (or the currently active scope if omitted).
 - `type_id` represents semantic compiler information (e.g., integer, float, pointer, struct tag); default is `1`.
-- If `identifier` is already declared in the *exact same scope*, this constitutes a redeclaration. The newest declaration updates the attributes in that scope, or generates a warning per the test harness configuration.
+- **Duplicate Declarations:** Per the Phase 2 specification (`docs/svc_hash_design.md` Section 4), a `(key, scope_id)` pair may be declared at most once. Duplicate declarations of the same identifier within the exact same scope are prohibited by contract in valid compiler symbol-table traces (reflecting compiler duplicate-definition errors) and are rejected by table insertion. Shadowing across distinct scopes remains fully supported and resolved by ancestor order.
 
 ### `REFERENCE <identifier> [scope_id]`
 - Performs a symbol table lookup for `identifier` initiating from `scope_id` (or currently active scope).
@@ -85,3 +85,9 @@ EXIT_SCOPE 0
 2. `REFERENCE count 2` inside scope 2 resolves to the shadowed `count` with `type_id = 2`.
 3. After `EXIT_SCOPE 2`, `REFERENCE count 1` resolves back to outer `count` (`type_id = 1`).
 4. After `EXIT_SCOPE 1`, `REFERENCE count 0` fails (returns not found) because `count` was only declared in inner scopes.
+
+---
+
+## 5. Revision History
+- **v1.0.0 (Phase 1):** Initial execution trace format grammar, semantics, and reference examples.
+- **v1.1.0 (Phase 4):** Reconciled duplicate declaration contract with approved Phase 2 design (`docs/svc_hash_design.md` Section 4). Explicitly prohibited same-scope redeclarations in valid compiler symbol-table traces while maintaining multi-scope shadowing.

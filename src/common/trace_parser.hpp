@@ -34,6 +34,7 @@ struct TraceCommand {
     uint32_t scope_id{0};
     std::optional<uint32_t> parent_scope_id{std::nullopt};
     int64_t type_id{1};
+    bool has_explicit_scope{false};
 
     bool operator==(const TraceCommand& other) const {
         return op == other.op &&
@@ -41,7 +42,8 @@ struct TraceCommand {
                identifier == other.identifier &&
                scope_id == other.scope_id &&
                parent_scope_id == other.parent_scope_id &&
-               type_id == other.type_id;
+               type_id == other.type_id &&
+               has_explicit_scope == other.has_explicit_scope;
     }
 };
 
@@ -100,6 +102,7 @@ public:
                                              ": ENTER_SCOPE missing scope_id");
                 }
                 cmd.scope_id = parseUint32(scope_str, line_number, "scope_id");
+                cmd.has_explicit_scope = true;
 
                 std::string parent_str;
                 if (line_stream >> parent_str) {
@@ -113,6 +116,7 @@ public:
                                              ": EXIT_SCOPE missing scope_id");
                 }
                 cmd.scope_id = parseUint32(scope_str, line_number, "scope_id");
+                cmd.has_explicit_scope = true;
             } else if (op_str == "DECLARE") {
                 cmd.op = TraceOp::DECLARE;
                 if (!(line_stream >> cmd.identifier)) {
@@ -128,6 +132,7 @@ public:
                 std::string scope_str;
                 if (line_stream >> scope_str) {
                     cmd.scope_id = parseUint32(scope_str, line_number, "scope_id");
+                    cmd.has_explicit_scope = true;
                 }
             } else if (op_str == "REFERENCE") {
                 cmd.op = TraceOp::REFERENCE;
@@ -140,6 +145,7 @@ public:
                 std::string scope_str;
                 if (line_stream >> scope_str) {
                     cmd.scope_id = parseUint32(scope_str, line_number, "scope_id");
+                    cmd.has_explicit_scope = true;
                 }
             } else {
                 throw std::runtime_error("Trace parse error on line " + std::to_string(line_number) +

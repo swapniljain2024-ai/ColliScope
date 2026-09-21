@@ -7,7 +7,7 @@ add_executable(test_scaffolding
 target_link_libraries(test_scaffolding PRIVATE colliscope_interface)
 add_test(NAME TestScaffolding COMMAND test_scaffolding)
 
-# Phase 1, Phase 2 & Phase 3 Catch2 Core, SVC-Hash, and Baseline Infrastructure test suite
+# Phase 1, Phase 2, Phase 3 & Phase 4 Catch2 Core, SVC-Hash, Baselines, and Trace System test suite
 add_executable(colliscope_tests
     cpp/test_main.cpp
     cpp/test_config.cpp
@@ -15,6 +15,7 @@ add_executable(colliscope_tests
     cpp/test_trace_parser.cpp
     cpp/test_svc_hash.cpp
     cpp/test_baselines.cpp
+    cpp/test_trace_system.cpp
 )
 target_include_directories(colliscope_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(colliscope_tests PRIVATE

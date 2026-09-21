@@ -1,0 +1,20 @@
+{
+  "trace_file": "sample_lexical.trace",
+  "total_references": 12,
+  "successful_references": 10,
+  "failed_references": 2,
+  "expected_references": [
+    { "index": 0, "identifier": "global_var", "scope_id": 0, "found": true, "type_id": 100 },
+    { "index": 1, "identifier": "count", "scope_id": 0, "found": true, "type_id": 1 },
+    { "index": 2, "identifier": "count", "scope_id": 1, "found": true, "type_id": 2 },
+    { "index": 3, "identifier": "global_var", "scope_id": 1, "found": true, "type_id": 100 },
+    { "index": 4, "identifier": "local_var", "scope_id": 1, "found": true, "type_id": 200 },
+    { "index": 5, "identifier": "count", "scope_id": 2, "found": true, "type_id": 3 },
+    { "index": 6, "identifier": "local_var", "scope_id": 2, "found": true, "type_id": 200 },
+    { "index": 7, "identifier": "global_var", "scope_id": 2, "found": true, "type_id": 100 },
+    { "index": 8, "identifier": "count", "scope_id": 1, "found": true, "type_id": 2 },
+    { "index": 9, "identifier": "count", "scope_id": 0, "found": true, "type_id": 1 },
+    { "index": 10, "identifier": "local_var", "scope_id": 0, "found": false },
+    { "index": 11, "identifier": "unknown_symbol", "scope_id": 0, "found": false }
+  ]
+}

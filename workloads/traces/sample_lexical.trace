@@ -1,0 +1,35 @@
+# ColliScope Sample Lexical Scope Trace
+# Exercises: Global scope, nested lexical scopes, shadowing, scope exit, and failed lookups.
+
+ENTER_SCOPE 0
+DECLARE global_var 100 0
+DECLARE count 1 0
+REFERENCE global_var 0
+REFERENCE count 0
+
+ENTER_SCOPE 1 0
+DECLARE count 2 1
+DECLARE local_var 200 1
+REFERENCE count 1
+REFERENCE global_var 1
+REFERENCE local_var 1
+
+ENTER_SCOPE 2 1
+DECLARE count 3 2
+REFERENCE count 2
+REFERENCE local_var 2
+REFERENCE global_var 2
+
+EXIT_SCOPE 2
+# After exiting scope 2, count resolves to scope 1's declaration (type_id = 2)
+REFERENCE count 1
+
+EXIT_SCOPE 1
+# After exiting scope 1, count resolves to scope 0's declaration (type_id = 1)
+REFERENCE count 0
+# local_var is closed and must fail
+REFERENCE local_var 0
+# unknown_symbol was never declared and must fail
+REFERENCE unknown_symbol 0
+
+EXIT_SCOPE 0
