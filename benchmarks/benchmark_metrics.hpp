@@ -99,7 +99,17 @@ struct BenchmarkTrialResult {
     std::string algorithm_name{"unknown"};
     std::string trace_name{"unknown"};
     uint32_t trial_index{0};
+    uint32_t execution_order{0};
     bool is_warmup{false};
+
+    // Workload / manifest classification metadata
+    std::string category{""};
+    std::string identifier_distribution{""};
+    std::string scope_mode{""};
+    std::string workload_type{""};
+    std::string replicate{""};
+    int64_t seed{-1};
+    std::string source_type{""};
 
     // Operation counts
     uint64_t total_operations{0};
@@ -137,7 +147,15 @@ struct BenchmarkTrialResult {
         j["algorithm_name"] = algorithm_name;
         j["trace_name"] = trace_name;
         j["trial_index"] = trial_index;
+        j["execution_order"] = execution_order;
         j["is_warmup"] = is_warmup;
+        j["category"] = category;
+        j["identifier_distribution"] = identifier_distribution;
+        j["scope_mode"] = scope_mode;
+        j["workload_type"] = workload_type;
+        j["replicate"] = replicate;
+        j["seed"] = seed;
+        j["source_type"] = source_type;
         j["total_operations"] = total_operations;
         j["insert_count"] = insert_count;
         j["lookup_count"] = lookup_count;
@@ -163,25 +181,39 @@ struct BenchmarkTrialResult {
     }
 
     static std::string csvHeader() {
-        return "trace_name,algorithm_name,trial_index,total_operations,insert_count,lookup_count,"
-               "successful_references,failed_references,total_time_ns,insert_time_ns,lookup_time_ns,"
-               "throughput_ops_sec,insert_p50_ns,insert_p95_ns,insert_p99_ns,lookup_p50_ns,lookup_p95_ns,"
-               "lookup_p99_ns,memory_usage_bytes,load_factor,capacity,num_elements,collision_count";
+        return "trace_name,category,identifier_distribution,scope_mode,workload_type,replicate,seed,source_type,"
+               "algorithm_name,trial_index,execution_order,is_warmup,total_operations,insert_count,lookup_count,"
+               "enter_scope_count,exit_scope_count,successful_references,failed_references,total_time_ns,"
+               "insert_time_ns,lookup_time_ns,scope_exit_time_ns,throughput_ops_sec,insert_p50_ns,insert_p95_ns,"
+               "insert_p99_ns,lookup_p50_ns,lookup_p95_ns,lookup_p99_ns,memory_usage_bytes,load_factor,capacity,"
+               "num_elements,collision_count";
     }
 
     std::string toCsvRow() const {
         std::ostringstream oss;
         oss << trace_name << ","
+            << category << ","
+            << identifier_distribution << ","
+            << scope_mode << ","
+            << workload_type << ","
+            << replicate << ","
+            << seed << ","
+            << source_type << ","
             << algorithm_name << ","
             << trial_index << ","
+            << execution_order << ","
+            << (is_warmup ? "true" : "false") << ","
             << total_operations << ","
             << insert_count << ","
             << lookup_count << ","
+            << enter_scope_count << ","
+            << exit_scope_count << ","
             << successful_references << ","
             << failed_references << ","
             << total_time_ns << ","
             << insert_time_ns << ","
             << lookup_time_ns << ","
+            << scope_exit_time_ns << ","
             << std::fixed << std::setprecision(2) << throughput_ops_sec << ","
             << std::fixed << std::setprecision(1) << insert_latency.p50_ns << ","
             << std::fixed << std::setprecision(1) << insert_latency.p95_ns << ","

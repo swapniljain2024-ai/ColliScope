@@ -18,8 +18,11 @@ void printUsage(const char* prog) {
               << "  --algorithms <list>       Comma-separated algorithms (chaining,cuckoo,hopscotch,svc_hash)\n"
               << "  --repetitions <N>         Repetitions per algorithm (default: 5)\n"
               << "  --warmup <N>              Warmup repetitions (default: 1)\n"
+              << "  --order-seed <N>          PRNG seed for alternating algorithm execution order (default: 42)\n"
+              << "  --no-alternating-order    Disable alternating algorithm execution order\n"
               << "  --output-json <path>      Export detailed results JSON\n"
-              << "  --output-csv <path>       Export tabular results CSV\n"
+              << "  --output-csv <path>       Export tabular results CSV (trial-level raw observations)\n"
+              << "  --output-summary-csv <path> Export aggregated per-trace summary CSV\n"
               << "  --no-scoped-baselines     Disable ScopedTableWrapper for baselines on nested traces\n"
               << "  --help                    Show this help message\n";
 }
@@ -42,8 +45,11 @@ int main(int argc, char* argv[]) {
     std::string alg_str = "chaining,cuckoo,hopscotch,svc_hash";
     size_t repetitions = 5;
     size_t warmup = 1;
+    uint32_t order_seed = 42;
+    bool alternate_order = true;
     std::string output_json = "";
     std::string output_csv = "";
+    std::string output_summary_csv = "";
     bool scoped_baselines = true;
 
     for (int i = 1; i < argc; ++i) {
@@ -58,10 +64,16 @@ int main(int argc, char* argv[]) {
             repetitions = std::stoul(argv[++i]);
         } else if (arg == "--warmup" && i + 1 < argc) {
             warmup = std::stoul(argv[++i]);
+        } else if (arg == "--order-seed" && i + 1 < argc) {
+            order_seed = static_cast<uint32_t>(std::stoul(argv[++i]));
+        } else if (arg == "--no-alternating-order") {
+            alternate_order = false;
         } else if (arg == "--output-json" && i + 1 < argc) {
             output_json = argv[++i];
         } else if (arg == "--output-csv" && i + 1 < argc) {
             output_csv = argv[++i];
+        } else if (arg == "--output-summary-csv" && i + 1 < argc) {
+            output_summary_csv = argv[++i];
         } else if (arg == "--no-scoped-baselines") {
             scoped_baselines = false;
         } else if (arg == "--help" || arg == "-h") {
@@ -85,6 +97,8 @@ int main(int argc, char* argv[]) {
     options.repetitions = repetitions;
     options.warmup_trials = warmup;
     options.scoped_baselines_on_nested = scoped_baselines;
+    options.alternate_algorithm_order = alternate_order;
+    options.order_seed = order_seed;
 
     std::vector<std::string> trace_paths;
 
@@ -104,14 +118,34 @@ int main(int argc, char* argv[]) {
 
         for (const auto& entry : mj["traces"]) {
             std::string t_file = entry["trace_file"].get<std::string>();
+            // Explicitly exclude functional test fixtures from the experimental benchmark run
+            if (t_file.find("sample_lexical") != std::string::npos) {
+                continue;
+            }
             trace_paths.push_back(base_dir + "/" + t_file);
+
+            TraceMetadata m;
+            m.trace_name = t_file;
+            m.category = entry.value("category", "synthetic");
+            m.identifier_distribution = entry.value("identifier_dimension", "");
+            m.scope_mode = entry.value("scope_dimension", "");
+            m.workload_type = entry.value("workload_type", entry.value("source_corpus", ""));
+            if (entry.contains("replicate_index")) {
+                m.replicate = "rep" + std::to_string(entry["replicate_index"].get<int>());
+            } else {
+                m.replicate = "none";
+            }
+            m.seed = entry.value("seed", -1);
+            m.source_type = entry.value("source_corpus", entry.value("source_type", "synthetic"));
+            options.manifest_metadata[t_file] = m;
         }
     }
 
     std::cout << "=================================================================\n"
-              << " ColliScope Benchmark Engine (Phase 6)\n"
+              << " ColliScope Benchmark Engine (Phase 7)\n"
               << " Replaying " << trace_paths.size() << " trace(s) across " << options.algorithms.size() << " algorithm(s)\n"
               << " Repetitions: " << options.repetitions << " (warmup: " << options.warmup_trials << ")\n"
+              << " Alternating algorithm execution order: " << (options.alternate_algorithm_order ? "ENABLED" : "DISABLED") << "\n"
               << " Scoped baselines on nested traces: " << (scoped_baselines ? "ENABLED" : "DISABLED") << "\n"
               << "=================================================================\n\n";
 
@@ -160,13 +194,19 @@ int main(int argc, char* argv[]) {
 
     if (!output_json.empty()) {
         std::cout << "Exporting JSON results to: " << output_json << " ... ";
-        BenchmarkEngine::exportToJson(output_json, all_results);
+        BenchmarkEngine::exportToJson(output_json, all_results, options);
         std::cout << "Done.\n";
     }
 
     if (!output_csv.empty()) {
-        std::cout << "Exporting CSV results to: " << output_csv << " ... ";
+        std::cout << "Exporting raw CSV trial results to: " << output_csv << " ... ";
         BenchmarkEngine::exportToCsv(output_csv, all_results);
+        std::cout << "Done.\n";
+    }
+
+    if (!output_summary_csv.empty()) {
+        std::cout << "Exporting aggregated summary CSV to: " << output_summary_csv << " ... ";
+        BenchmarkEngine::exportAggregatedCsv(output_summary_csv, all_results);
         std::cout << "Done.\n";
     }
 

@@ -6,8 +6,34 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cmath>
+#include <random>
+#include <numeric>
+
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
 
 namespace colliscope {
+
+static void ensureDirectoryExists(const std::string& filepath) {
+    size_t last_slash = filepath.find_last_of("/\\");
+    if (last_slash == std::string::npos) return;
+    std::string dir = filepath.substr(0, last_slash);
+    if (dir.empty() || dir == ".") return;
+
+    for (size_t i = 1; i <= dir.length(); ++i) {
+        if (i == dir.length() || dir[i] == '/' || dir[i] == '\\') {
+            std::string sub = dir.substr(0, i);
+#ifdef _WIN32
+            _mkdir(sub.c_str());
+#else
+            mkdir(sub.c_str(), 0755);
+#endif
+        }
+    }
+}
 
 std::unique_ptr<ISymbolTable> BenchmarkEngine::createTable(
     const std::string& algorithm_name,
@@ -304,6 +330,78 @@ BenchmarkTrialResult BenchmarkEngine::runTrial(
     return trial;
 }
 
+TraceMetadata TraceMetadata::parseFromFilename(const std::string& filepath) {
+    TraceMetadata meta;
+    std::string basename = filepath;
+    size_t last_slash = filepath.find_last_of("/\\");
+    if (last_slash != std::string::npos) {
+        basename = filepath.substr(last_slash + 1);
+    }
+    meta.trace_name = basename;
+
+    if (basename.find("real-source") != std::string::npos) {
+        meta.category = "real-source";
+        meta.identifier_distribution = "real";
+        meta.scope_mode = (basename.find("nested") != std::string::npos) ? "nested" : "flat";
+        meta.workload_type = "cjson_full";
+        meta.replicate = "none";
+        meta.seed = -1;
+        meta.source_type = "cJSON_v1.7.18";
+    } else if (basename.find("sample_lexical") != std::string::npos) {
+        meta.category = "fixture";
+        meta.identifier_distribution = "sample";
+        meta.scope_mode = "nested";
+        meta.workload_type = "sample";
+        meta.replicate = "none";
+        meta.seed = -1;
+        meta.source_type = "sample";
+    } else {
+        meta.category = "synthetic";
+        meta.source_type = "synthetic";
+
+        if (basename.find("frequency-matched") != std::string::npos) {
+            meta.identifier_distribution = "frequency-matched";
+        } else if (basename.find("random") != std::string::npos) {
+            meta.identifier_distribution = "random";
+        } else {
+            meta.identifier_distribution = "synthetic";
+        }
+
+        if (basename.find("nested") != std::string::npos) {
+            meta.scope_mode = "nested";
+        } else if (basename.find("flat") != std::string::npos) {
+            meta.scope_mode = "flat";
+        } else {
+            meta.scope_mode = "flat";
+        }
+
+        if (basename.find("declaration-heavy") != std::string::npos) {
+            meta.workload_type = "declaration-heavy";
+        } else if (basename.find("lookup-heavy") != std::string::npos) {
+            meta.workload_type = "lookup-heavy";
+        } else if (basename.find("mixed") != std::string::npos) {
+            meta.workload_type = "mixed";
+        } else {
+            meta.workload_type = "synthetic";
+        }
+
+        if (basename.find("rep1") != std::string::npos) {
+            meta.replicate = "rep1";
+            meta.seed = 42;
+        } else if (basename.find("rep2") != std::string::npos) {
+            meta.replicate = "rep2";
+            meta.seed = 43;
+        } else if (basename.find("rep3") != std::string::npos) {
+            meta.replicate = "rep3";
+            meta.seed = 44;
+        } else {
+            meta.replicate = "none";
+            meta.seed = -1;
+        }
+    }
+    return meta;
+}
+
 TraceBenchmarkRunResult BenchmarkEngine::benchmarkTrace(
     const std::string& trace_filepath,
     const BenchmarkConfigOptions& options
@@ -329,6 +427,15 @@ TraceBenchmarkRunResult BenchmarkEngine::benchmarkTrace(
     }
     run_res.is_nested_scope = is_nested;
 
+    TraceMetadata meta;
+    auto meta_it = options.manifest_metadata.find(basename);
+    if (meta_it != options.manifest_metadata.end()) {
+        meta = meta_it->second;
+    } else {
+        meta = TraceMetadata::parseFromFilename(basename);
+    }
+
+    // 1. Warmup trials per algorithm (prime caches and memory, excluded from reported data)
     for (const auto& alg_name : options.algorithms) {
         auto table = createTable(
             alg_name,
@@ -336,23 +443,56 @@ TraceBenchmarkRunResult BenchmarkEngine::benchmarkTrace(
             options.scoped_baselines_on_nested,
             options.initial_capacity
         );
-
-        // Warmup runs
         for (size_t w = 0; w < options.warmup_trials; ++w) {
             runTrial(commands, *table, basename, static_cast<uint32_t>(w), true);
         }
+    }
 
-        // Timed repetitions
-        std::vector<BenchmarkTrialResult> alg_trials;
-        alg_trials.reserve(options.repetitions);
+    // 2. Measured repetitions with alternating algorithm execution order
+    std::map<std::string, std::vector<BenchmarkTrialResult>> alg_trials;
 
-        for (size_t r = 0; r < options.repetitions; ++r) {
-            auto trial = runTrial(commands, *table, basename, static_cast<uint32_t>(r + 1), false);
-            alg_trials.push_back(trial);
-            run_res.all_trials.push_back(trial);
+    for (size_t r = 0; r < options.repetitions; ++r) {
+        std::vector<size_t> alg_indices(options.algorithms.size());
+        std::iota(alg_indices.begin(), alg_indices.end(), 0);
+
+        if (options.alternate_algorithm_order && options.algorithms.size() > 1) {
+            // Deterministic pseudo-random shuffle seeded by order_seed, trace hash, and repetition index
+            uint64_t step_seed = static_cast<uint64_t>(options.order_seed) * 1000003ULL +
+                                 std::hash<std::string>{}(basename) * 1009ULL +
+                                 static_cast<uint64_t>(r + 1);
+            std::mt19937 prng(static_cast<uint32_t>(step_seed));
+            std::shuffle(alg_indices.begin(), alg_indices.end(), prng);
         }
 
-        auto summary = AlgorithmBenchmarkSummary::aggregate(alg_trials);
+        for (size_t e = 0; e < alg_indices.size(); ++e) {
+            size_t alg_idx = alg_indices[e];
+            const auto& alg_name = options.algorithms[alg_idx];
+
+            auto table = createTable(
+                alg_name,
+                is_nested,
+                options.scoped_baselines_on_nested,
+                options.initial_capacity
+            );
+
+            auto trial = runTrial(commands, *table, basename, static_cast<uint32_t>(r + 1), false);
+            trial.execution_order = static_cast<uint32_t>(e + 1);
+            trial.category = meta.category;
+            trial.identifier_distribution = meta.identifier_distribution;
+            trial.scope_mode = meta.scope_mode;
+            trial.workload_type = meta.workload_type;
+            trial.replicate = meta.replicate;
+            trial.seed = meta.seed;
+            trial.source_type = meta.source_type;
+
+            alg_trials[trial.algorithm_name].push_back(trial);
+            run_res.all_trials.push_back(trial);
+        }
+    }
+
+    // 3. Aggregate summaries per algorithm
+    for (const auto& pair : alg_trials) {
+        auto summary = AlgorithmBenchmarkSummary::aggregate(pair.second);
         run_res.algorithm_summaries[summary.algorithm_name] = summary;
     }
 
@@ -379,6 +519,15 @@ TraceBenchmarkRunResult BenchmarkEngine::benchmarkTraceString(
     }
     run_res.is_nested_scope = is_nested;
 
+    TraceMetadata meta;
+    auto meta_it = options.manifest_metadata.find(trace_name);
+    if (meta_it != options.manifest_metadata.end()) {
+        meta = meta_it->second;
+    } else {
+        meta = TraceMetadata::parseFromFilename(trace_name);
+    }
+
+    // 1. Warmup trials per algorithm
     for (const auto& alg_name : options.algorithms) {
         auto table = createTable(
             alg_name,
@@ -386,21 +535,55 @@ TraceBenchmarkRunResult BenchmarkEngine::benchmarkTraceString(
             options.scoped_baselines_on_nested,
             options.initial_capacity
         );
-
         for (size_t w = 0; w < options.warmup_trials; ++w) {
             runTrial(commands, *table, trace_name, static_cast<uint32_t>(w), true);
         }
+    }
 
-        std::vector<BenchmarkTrialResult> alg_trials;
-        alg_trials.reserve(options.repetitions);
+    // 2. Measured repetitions with alternating algorithm execution order
+    std::map<std::string, std::vector<BenchmarkTrialResult>> alg_trials;
 
-        for (size_t r = 0; r < options.repetitions; ++r) {
-            auto trial = runTrial(commands, *table, trace_name, static_cast<uint32_t>(r + 1), false);
-            alg_trials.push_back(trial);
-            run_res.all_trials.push_back(trial);
+    for (size_t r = 0; r < options.repetitions; ++r) {
+        std::vector<size_t> alg_indices(options.algorithms.size());
+        std::iota(alg_indices.begin(), alg_indices.end(), 0);
+
+        if (options.alternate_algorithm_order && options.algorithms.size() > 1) {
+            uint64_t step_seed = static_cast<uint64_t>(options.order_seed) * 1000003ULL +
+                                 std::hash<std::string>{}(trace_name) * 1009ULL +
+                                 static_cast<uint64_t>(r + 1);
+            std::mt19937 prng(static_cast<uint32_t>(step_seed));
+            std::shuffle(alg_indices.begin(), alg_indices.end(), prng);
         }
 
-        auto summary = AlgorithmBenchmarkSummary::aggregate(alg_trials);
+        for (size_t e = 0; e < alg_indices.size(); ++e) {
+            size_t alg_idx = alg_indices[e];
+            const auto& alg_name = options.algorithms[alg_idx];
+
+            auto table = createTable(
+                alg_name,
+                is_nested,
+                options.scoped_baselines_on_nested,
+                options.initial_capacity
+            );
+
+            auto trial = runTrial(commands, *table, trace_name, static_cast<uint32_t>(r + 1), false);
+            trial.execution_order = static_cast<uint32_t>(e + 1);
+            trial.category = meta.category;
+            trial.identifier_distribution = meta.identifier_distribution;
+            trial.scope_mode = meta.scope_mode;
+            trial.workload_type = meta.workload_type;
+            trial.replicate = meta.replicate;
+            trial.seed = meta.seed;
+            trial.source_type = meta.source_type;
+
+            alg_trials[trial.algorithm_name].push_back(trial);
+            run_res.all_trials.push_back(trial);
+        }
+    }
+
+    // 3. Aggregate summaries per algorithm
+    for (const auto& pair : alg_trials) {
+        auto summary = AlgorithmBenchmarkSummary::aggregate(pair.second);
         run_res.algorithm_summaries[summary.algorithm_name] = summary;
     }
 
@@ -409,11 +592,23 @@ TraceBenchmarkRunResult BenchmarkEngine::benchmarkTraceString(
 
 void BenchmarkEngine::exportToJson(
     const std::string& filepath,
-    const std::vector<TraceBenchmarkRunResult>& results
+    const std::vector<TraceBenchmarkRunResult>& results,
+    const BenchmarkConfigOptions& options
 ) {
     nlohmann::json root;
-    root["benchmark_version"] = "1.0.0";
+    root["benchmark_version"] = "2.0.0";
+    root["benchmark_phase"] = "Phase 7";
     root["latency_measurement_methodology"] = "amortized batch latency per operation";
+    root["load_factor_interpretation"] = "observed output metric; no nominal load-factor factor";
+    root["statistical_unit_model"] = "12 synthetic conditions x 3 workload seed replicates; cJSON as descriptive case study; repetitions are repeated measurements";
+    root["order_seed"] = options.order_seed;
+    root["warmup_trials_per_algorithm"] = options.warmup_trials;
+    root["measured_repetitions_per_algorithm"] = options.repetitions;
+    root["alternate_algorithm_order"] = options.alternate_algorithm_order;
+    root["scoped_baselines_on_nested"] = options.scoped_baselines_on_nested;
+    root["timer"] = "Windows QueryPerformanceCounter (monotonic)";
+    root["timer_frequency_hz"] = HighPrecisionTimer::getFrequency();
+    root["timer_resolution_ns"] = HighPrecisionTimer::measureEmpiricalResolutionNs();
     root["total_runs"] = results.size();
 
     nlohmann::json runs_arr = nlohmann::json::array();
@@ -422,6 +617,7 @@ void BenchmarkEngine::exportToJson(
     }
     root["runs"] = runs_arr;
 
+    ensureDirectoryExists(filepath);
     std::ofstream ofs(filepath);
     if (!ofs.is_open()) {
         throw std::runtime_error("Cannot open JSON output file: " + filepath);
@@ -433,6 +629,7 @@ void BenchmarkEngine::exportToCsv(
     const std::string& filepath,
     const std::vector<TraceBenchmarkRunResult>& results
 ) {
+    ensureDirectoryExists(filepath);
     std::ofstream ofs(filepath);
     if (!ofs.is_open()) {
         throw std::runtime_error("Cannot open CSV output file: " + filepath);
@@ -442,6 +639,64 @@ void BenchmarkEngine::exportToCsv(
     for (const auto& res : results) {
         for (const auto& trial : res.all_trials) {
             ofs << trial.toCsvRow() << "\n";
+        }
+    }
+}
+
+void BenchmarkEngine::exportAggregatedCsv(
+    const std::string& filepath,
+    const std::vector<TraceBenchmarkRunResult>& results
+) {
+    ensureDirectoryExists(filepath);
+    std::ofstream ofs(filepath);
+    if (!ofs.is_open()) {
+        throw std::runtime_error("Cannot open aggregated CSV output file: " + filepath);
+    }
+
+    ofs << "trace_name,category,identifier_distribution,scope_mode,workload_type,replicate,seed,source_type,"
+        << "algorithm_name,repetitions,mean_throughput_ops_sec,stddev_throughput_ops_sec,mean_total_time_ns,"
+        << "mean_insert_p50_ns,mean_insert_p95_ns,mean_insert_p99_ns,mean_lookup_p50_ns,mean_lookup_p95_ns,"
+        << "mean_lookup_p99_ns,memory_usage_bytes,final_load_factor,successful_references,failed_references\n";
+
+    for (const auto& res : results) {
+        for (const auto& pair : res.algorithm_summaries) {
+            const auto& s = pair.second;
+            std::string cat = "", id_dist = "", scope = "", w_type = "", rep = "", s_type = "";
+            int64_t seed = -1;
+            if (!s.trials.empty()) {
+                const auto& t0 = s.trials.front();
+                cat = t0.category;
+                id_dist = t0.identifier_distribution;
+                scope = t0.scope_mode;
+                w_type = t0.workload_type;
+                rep = t0.replicate;
+                seed = t0.seed;
+                s_type = t0.source_type;
+            }
+
+            ofs << res.trace_file << ","
+                << cat << ","
+                << id_dist << ","
+                << scope << ","
+                << w_type << ","
+                << rep << ","
+                << seed << ","
+                << s_type << ","
+                << s.algorithm_name << ","
+                << s.repetitions << ","
+                << std::fixed << std::setprecision(2) << s.mean_throughput_ops_sec << ","
+                << std::fixed << std::setprecision(2) << s.stddev_throughput_ops_sec << ","
+                << std::fixed << std::setprecision(0) << s.mean_total_time_ns << ","
+                << std::fixed << std::setprecision(1) << s.mean_insert_p50_ns << ","
+                << std::fixed << std::setprecision(1) << s.mean_insert_p95_ns << ","
+                << std::fixed << std::setprecision(1) << s.mean_insert_p99_ns << ","
+                << std::fixed << std::setprecision(1) << s.mean_lookup_p50_ns << ","
+                << std::fixed << std::setprecision(1) << s.mean_lookup_p95_ns << ","
+                << std::fixed << std::setprecision(1) << s.mean_lookup_p99_ns << ","
+                << s.memory_usage_bytes << ","
+                << std::fixed << std::setprecision(4) << s.final_load_factor << ","
+                << s.successful_references << ","
+                << s.failed_references << "\n";
         }
     }
 }

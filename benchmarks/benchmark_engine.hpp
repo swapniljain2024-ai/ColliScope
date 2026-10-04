@@ -18,12 +18,28 @@
 
 namespace colliscope {
 
+struct TraceMetadata {
+    std::string trace_name{""};
+    std::string category{""};
+    std::string identifier_distribution{""};
+    std::string scope_mode{""};
+    std::string workload_type{""};
+    std::string replicate{""};
+    int64_t seed{-1};
+    std::string source_type{""};
+
+    static TraceMetadata parseFromFilename(const std::string& filepath);
+};
+
 struct BenchmarkConfigOptions {
     std::vector<std::string> algorithms{"chaining", "cuckoo", "hopscotch", "svc_hash"};
     size_t repetitions{5};
     size_t warmup_trials{1};
     bool scoped_baselines_on_nested{true};
     size_t initial_capacity{16};
+    bool alternate_algorithm_order{true};
+    uint32_t order_seed{42};
+    std::map<std::string, TraceMetadata> manifest_metadata;
 };
 
 struct TraceBenchmarkRunResult {
@@ -99,13 +115,22 @@ public:
      */
     static void exportToJson(
         const std::string& filepath,
-        const std::vector<TraceBenchmarkRunResult>& results
+        const std::vector<TraceBenchmarkRunResult>& results,
+        const BenchmarkConfigOptions& options = BenchmarkConfigOptions()
     );
 
     /**
      * Exports all trial rows to a standard CSV file for statistical analysis.
      */
     static void exportToCsv(
+        const std::string& filepath,
+        const std::vector<TraceBenchmarkRunResult>& results
+    );
+
+    /**
+     * Exports per-trace aggregated summaries to a standard CSV file.
+     */
+    static void exportAggregatedCsv(
         const std::string& filepath,
         const std::vector<TraceBenchmarkRunResult>& results
     );

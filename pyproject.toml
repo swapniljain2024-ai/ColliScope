@@ -1,0 +1,21 @@
+[project]
+name = "colliscope"
+version = "0.1.0"
+description = "ColliScope: Hash Collision Resolution and Lexical Scope Symbol Table Research Framework"
+authors = [{ name = "ColliScope Research Team" }]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "pandas>=2.0.0",
+    "matplotlib>=3.7.0",
+    "pytest>=7.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/python"]
+pythonpath = ["."]
+
+[tool.pyright]
+include = ["benchmarks", "workloads", "analysis", "tests/python"]
+extraPaths = ["."]
