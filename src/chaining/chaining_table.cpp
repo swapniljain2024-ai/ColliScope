@@ -54,7 +54,7 @@ void ChainingHashTable::checkAndRehash() {
 }
 
 bool ChainingHashTable::insert(const std::string& key, const SymbolValue& value, uint32_t scope_id) {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = timing_enabled_ ? std::chrono::high_resolution_clock::now() : std::chrono::high_resolution_clock::time_point{};
     total_operations_++;
 
     size_t bucket_idx = computeHash(key) % num_buckets_;
@@ -71,8 +71,10 @@ bool ChainingHashTable::insert(const std::string& key, const SymbolValue& value,
             // Update existing entry
             node.value = value;
             node.scope_id = scope_id;
-            auto end = std::chrono::high_resolution_clock::now();
-            insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+            if (timing_enabled_) {
+                auto end = std::chrono::high_resolution_clock::now();
+                insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+            }
             return true;
         }
     }
@@ -83,13 +85,15 @@ bool ChainingHashTable::insert(const std::string& key, const SymbolValue& value,
 
     checkAndRehash();
 
-    auto end = std::chrono::high_resolution_clock::now();
-    insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    if (timing_enabled_) {
+        auto end = std::chrono::high_resolution_clock::now();
+        insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    }
     return true;
 }
 
 std::optional<SymbolValue> ChainingHashTable::lookup(const std::string& key, uint32_t /*scope_id*/) {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = timing_enabled_ ? std::chrono::high_resolution_clock::now() : std::chrono::high_resolution_clock::time_point{};
     total_operations_++;
 
     size_t bucket_idx = computeHash(key) % num_buckets_;
@@ -100,15 +104,19 @@ std::optional<SymbolValue> ChainingHashTable::lookup(const std::string& key, uin
         key_comparisons_++;
         if (node.key == key) {
             successful_lookups_++;
-            auto end = std::chrono::high_resolution_clock::now();
-            lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+            if (timing_enabled_) {
+                auto end = std::chrono::high_resolution_clock::now();
+                lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+            }
             return node.value;
         }
     }
 
     failed_lookups_++;
-    auto end = std::chrono::high_resolution_clock::now();
-    lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    if (timing_enabled_) {
+        auto end = std::chrono::high_resolution_clock::now();
+        lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    }
     return std::nullopt;
 }
 
@@ -118,6 +126,14 @@ void ChainingHashTable::enterScope(uint32_t /*scope_id*/, uint32_t /*parent_scop
 
 void ChainingHashTable::exitScope(uint32_t /*scope_id*/) {
     // Zero-cost inline no-op for non-scope-aware baseline
+}
+
+size_t ChainingHashTable::getMemoryUsage() const {
+    size_t mem = sizeof(*this) + buckets_.capacity() * sizeof(std::vector<ChainNode>);
+    for (const auto& chain : buckets_) {
+        mem += chain.capacity() * sizeof(ChainNode);
+    }
+    return mem;
 }
 
 TableMetrics ChainingHashTable::getMetrics() const {
@@ -139,12 +155,11 @@ TableMetrics ChainingHashTable::getMetrics() const {
     }
 
     // Memory calculation
-    size_t mem = sizeof(*this) + buckets_.capacity() * sizeof(std::vector<ChainNode>);
+    size_t mem = getMemoryUsage();
     size_t max_chain = 0;
     size_t non_empty_buckets = 0;
 
     for (const auto& chain : buckets_) {
-        mem += chain.capacity() * sizeof(ChainNode);
         if (!chain.empty()) {
             non_empty_buckets++;
             max_chain = std::max(max_chain, chain.size());

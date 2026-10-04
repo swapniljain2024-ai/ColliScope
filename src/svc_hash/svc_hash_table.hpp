@@ -53,8 +53,15 @@ public:
     TableMetrics getMetrics() const override;
     std::string getAlgorithmName() const override { return "svc_hash"; }
 
+    // Timing Control
+    void setTimingEnabled(bool enabled) override { timing_enabled_ = enabled; }
+    bool isTimingEnabled() const override { return timing_enabled_; }
+
     // Helper diagnostics & inspection
     size_t getBucketCount() const { return num_buckets_; }
+    size_t getCapacity() const override { return num_buckets_ * Bucket::BUCKET_SIZE; }
+    size_t getElementCount() const override { return occupied_count_ - tombstone_count_; }
+    size_t getMemoryUsage() const override;
     size_t getOccupiedCount() const { return occupied_count_; }
     size_t getTombstoneCount() const { return tombstone_count_; }
     size_t getStashCount() const { return stash_count_; }
@@ -72,10 +79,13 @@ private:
     size_t num_buckets_;
     std::vector<Bucket> buckets_;
     BucketEntry stash_[STASH_SIZE];
+    bool timing_enabled_{true};
 
     size_t occupied_count_{0};
     size_t tombstone_count_{0};
     size_t stash_count_{0};
+    size_t peak_elements_{0};
+    double peak_load_factor_{0.0};
 
     uint32_t current_scope_id_{0};
     std::vector<uint32_t> scope_stack_;

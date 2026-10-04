@@ -152,7 +152,7 @@ bool HopscotchHashTable::insertInternal(const std::string& key, const SymbolValu
 }
 
 bool HopscotchHashTable::insert(const std::string& key, const SymbolValue& value, uint32_t scope_id) {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = timing_enabled_ ? std::chrono::high_resolution_clock::now() : std::chrono::high_resolution_clock::time_point{};
     total_operations_++;
 
     if (!insertInternal(key, value, scope_id)) {
@@ -164,13 +164,15 @@ bool HopscotchHashTable::insert(const std::string& key, const SymbolValue& value
         }
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    if (timing_enabled_) {
+        auto end = std::chrono::high_resolution_clock::now();
+        insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    }
     return true;
 }
 
 std::optional<SymbolValue> HopscotchHashTable::lookup(const std::string& key, uint32_t /*scope_id*/) {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = timing_enabled_ ? std::chrono::high_resolution_clock::now() : std::chrono::high_resolution_clock::time_point{};
     total_operations_++;
 
     size_t home = computeHash(key) % capacity_;
@@ -182,16 +184,20 @@ std::optional<SymbolValue> HopscotchHashTable::lookup(const std::string& key, ui
             key_comparisons_++;
             if (slots_[idx].occupied && slots_[idx].key == key) {
                 successful_lookups_++;
-                auto end = std::chrono::high_resolution_clock::now();
-                lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+                if (timing_enabled_) {
+                    auto end = std::chrono::high_resolution_clock::now();
+                    lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+                }
                 return slots_[idx].value;
             }
         }
     }
 
     failed_lookups_++;
-    auto end = std::chrono::high_resolution_clock::now();
-    lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    if (timing_enabled_) {
+        auto end = std::chrono::high_resolution_clock::now();
+        lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    }
     return std::nullopt;
 }
 
@@ -201,6 +207,10 @@ void HopscotchHashTable::enterScope(uint32_t /*scope_id*/, uint32_t /*parent_sco
 
 void HopscotchHashTable::exitScope(uint32_t /*scope_id*/) {
     // Zero-cost inline no-op for non-scope-aware baseline
+}
+
+size_t HopscotchHashTable::getMemoryUsage() const {
+    return sizeof(*this) + slots_.capacity() * sizeof(HopscotchSlot);
 }
 
 TableMetrics HopscotchHashTable::getMetrics() const {
@@ -221,7 +231,7 @@ TableMetrics HopscotchHashTable::getMetrics() const {
         m.throughput_ops_sec = 0.0;
     }
 
-    m.memory_usage_bytes = sizeof(*this) + slots_.capacity() * sizeof(HopscotchSlot);
+    m.memory_usage_bytes = getMemoryUsage();
     m.collision_count = collision_count_;
     m.successful_lookups = successful_lookups_;
     m.failed_lookups = failed_lookups_;

@@ -151,7 +151,7 @@ bool CuckooHashTable::insertInternal(const std::string& key, const SymbolValue& 
 }
 
 bool CuckooHashTable::insert(const std::string& key, const SymbolValue& value, uint32_t scope_id) {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = timing_enabled_ ? std::chrono::high_resolution_clock::now() : std::chrono::high_resolution_clock::time_point{};
     total_operations_++;
 
     CuckooSlot evicted;
@@ -160,13 +160,15 @@ bool CuckooHashTable::insert(const std::string& key, const SymbolValue& value, u
         rehash(capacity_ * 2, &evicted);
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    if (timing_enabled_) {
+        auto end = std::chrono::high_resolution_clock::now();
+        insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    }
     return true;
 }
 
 std::optional<SymbolValue> CuckooHashTable::lookup(const std::string& key, uint32_t /*scope_id*/) {
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = timing_enabled_ ? std::chrono::high_resolution_clock::now() : std::chrono::high_resolution_clock::time_point{};
     total_operations_++;
 
     size_t pos1, pos2;
@@ -174,21 +176,27 @@ std::optional<SymbolValue> CuckooHashTable::lookup(const std::string& key, uint3
 
     if (slots_[pos1].occupied && slots_[pos1].key == key) {
         successful_lookups_++;
-        auto end = std::chrono::high_resolution_clock::now();
-        lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+        if (timing_enabled_) {
+            auto end = std::chrono::high_resolution_clock::now();
+            lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+        }
         return slots_[pos1].value;
     }
 
     if (slots_[pos2].occupied && slots_[pos2].key == key) {
         successful_lookups_++;
-        auto end = std::chrono::high_resolution_clock::now();
-        lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+        if (timing_enabled_) {
+            auto end = std::chrono::high_resolution_clock::now();
+            lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+        }
         return slots_[pos2].value;
     }
 
     failed_lookups_++;
-    auto end = std::chrono::high_resolution_clock::now();
-    lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    if (timing_enabled_) {
+        auto end = std::chrono::high_resolution_clock::now();
+        lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    }
     return std::nullopt;
 }
 
@@ -198,6 +206,10 @@ void CuckooHashTable::enterScope(uint32_t /*scope_id*/, uint32_t /*parent_scope_
 
 void CuckooHashTable::exitScope(uint32_t /*scope_id*/) {
     // Zero-cost inline no-op for non-scope-aware baseline
+}
+
+size_t CuckooHashTable::getMemoryUsage() const {
+    return sizeof(*this) + slots_.capacity() * sizeof(CuckooSlot);
 }
 
 TableMetrics CuckooHashTable::getMetrics() const {
@@ -218,7 +230,7 @@ TableMetrics CuckooHashTable::getMetrics() const {
         m.throughput_ops_sec = 0.0;
     }
 
-    m.memory_usage_bytes = sizeof(*this) + slots_.capacity() * sizeof(CuckooSlot);
+    m.memory_usage_bytes = getMemoryUsage();
     m.collision_count = collision_count_;
     m.successful_lookups = successful_lookups_;
     m.failed_lookups = failed_lookups_;

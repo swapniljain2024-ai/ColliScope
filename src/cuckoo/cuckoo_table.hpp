@@ -40,9 +40,14 @@ public:
     TableMetrics getMetrics() const override;
     std::string getAlgorithmName() const override { return "cuckoo"; }
 
+    // Timing Control
+    void setTimingEnabled(bool enabled) override { timing_enabled_ = enabled; }
+    bool isTimingEnabled() const override { return timing_enabled_; }
+
     // Diagnostic accessors
-    size_t getCapacity() const { return capacity_; }
-    size_t getElementCount() const { return num_elements_; }
+    size_t getCapacity() const override { return capacity_; }
+    size_t getElementCount() const override { return num_elements_; }
+    size_t getMemoryUsage() const override;
     uint64_t getRehashCount() const { return rehash_count_; }
 
     static uint64_t computeHash(const std::string& key, uint64_t seed);
@@ -55,6 +60,7 @@ private:
     size_t capacity_;
     size_t num_elements_{0};
     std::vector<CuckooSlot> slots_;
+    bool timing_enabled_{true};
 
     uint64_t hash_seed_1_{DEFAULT_HASH_SEED_1};
     uint64_t hash_seed_2_{DEFAULT_HASH_SEED_2};

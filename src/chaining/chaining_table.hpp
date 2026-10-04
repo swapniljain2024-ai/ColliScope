@@ -38,9 +38,15 @@ public:
     TableMetrics getMetrics() const override;
     std::string getAlgorithmName() const override { return "chaining"; }
 
+    // Timing Control
+    void setTimingEnabled(bool enabled) override { timing_enabled_ = enabled; }
+    bool isTimingEnabled() const override { return timing_enabled_; }
+
     // Diagnostic accessors
     size_t getBucketCount() const { return num_buckets_; }
-    size_t getElementCount() const { return num_elements_; }
+    size_t getElementCount() const override { return num_elements_; }
+    size_t getCapacity() const override { return num_buckets_; }
+    size_t getMemoryUsage() const override;
 
     static uint64_t computeHash(const std::string& key);
 
@@ -50,6 +56,7 @@ private:
     size_t num_buckets_;
     size_t num_elements_{0};
     std::vector<std::vector<ChainNode>> buckets_;
+    bool timing_enabled_{true};
 
     // Telemetry & metrics tracking
     mutable uint64_t insertion_time_ns_{0};

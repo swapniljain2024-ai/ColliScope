@@ -56,6 +56,8 @@ void SvcHashTable::reset() {
     collision_count_ = 0;
     kick_count_ = 0;
     rebuild_count_ = 0;
+    peak_elements_ = 0;
+    peak_load_factor_ = 0.0;
 }
 
 bool SvcHashTable::isScopeActive(uint32_t scope_id) const {
@@ -116,7 +118,7 @@ void SvcHashTable::enterScope(uint32_t scope_id, uint32_t parent_scope_id) {
 }
 
 void SvcHashTable::exitScope(uint32_t scope_id) {
-    auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time = timing_enabled_ ? std::chrono::high_resolution_clock::now() : std::chrono::high_resolution_clock::time_point{};
     total_operations_++;
 
     // Scope Exit Contract Validation (v2.2.0):
@@ -192,14 +194,16 @@ void SvcHashTable::exitScope(uint32_t scope_id) {
     }
     current_scope_id_ = scope_stack_.empty() ? 0 : scope_stack_.back();
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    scope_exit_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+    if (timing_enabled_) {
+        auto end_time = std::chrono::high_resolution_clock::now();
+        scope_exit_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+    }
 
     checkAndRebuildIfNeeded();
 }
 
 std::optional<SymbolValue> SvcHashTable::lookup(const std::string& key, uint32_t scope_id) {
-    auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time = timing_enabled_ ? std::chrono::high_resolution_clock::now() : std::chrono::high_resolution_clock::time_point{};
     total_operations_++;
 
     uint32_t curr_scope = scope_id;
@@ -219,8 +223,10 @@ std::optional<SymbolValue> SvcHashTable::lookup(const std::string& key, uint32_t
         for (size_t s = 0; s < Bucket::BUCKET_SIZE; ++s) {
             const auto& slot = buckets_[b1].entries[s];
             if (slot.occupied && !slot.tombstoned && slot.key == key && slot.scope_id == curr_scope) {
-                auto end_time = std::chrono::high_resolution_clock::now();
-                lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+                if (timing_enabled_) {
+                    auto end_time = std::chrono::high_resolution_clock::now();
+                    lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+                }
                 successful_lookups_++;
                 return slot.value;
             }
@@ -230,8 +236,10 @@ std::optional<SymbolValue> SvcHashTable::lookup(const std::string& key, uint32_t
         for (size_t s = 0; s < Bucket::BUCKET_SIZE; ++s) {
             const auto& slot = buckets_[b2].entries[s];
             if (slot.occupied && !slot.tombstoned && slot.key == key && slot.scope_id == curr_scope) {
-                auto end_time = std::chrono::high_resolution_clock::now();
-                lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+                if (timing_enabled_) {
+                    auto end_time = std::chrono::high_resolution_clock::now();
+                    lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+                }
                 successful_lookups_++;
                 return slot.value;
             }
@@ -241,8 +249,10 @@ std::optional<SymbolValue> SvcHashTable::lookup(const std::string& key, uint32_t
         for (size_t i = 0; i < STASH_SIZE; ++i) {
             const auto& slot = stash_[i];
             if (slot.occupied && !slot.tombstoned && slot.key == key && slot.scope_id == curr_scope) {
-                auto end_time = std::chrono::high_resolution_clock::now();
-                lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+                if (timing_enabled_) {
+                    auto end_time = std::chrono::high_resolution_clock::now();
+                    lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+                }
                 successful_lookups_++;
                 return slot.value;
             }
@@ -256,20 +266,24 @@ std::optional<SymbolValue> SvcHashTable::lookup(const std::string& key, uint32_t
         }
     }
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+    if (timing_enabled_) {
+        auto end_time = std::chrono::high_resolution_clock::now();
+        lookup_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+    }
     failed_lookups_++;
     return std::nullopt;
 }
 
 bool SvcHashTable::insert(const std::string& key, const SymbolValue& value, uint32_t scope_id) {
-    auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time = timing_enabled_ ? std::chrono::high_resolution_clock::now() : std::chrono::high_resolution_clock::time_point{};
     total_operations_++;
 
     auto reg_it = scope_registry_.find(scope_id);
     if (reg_it == scope_registry_.end() || !reg_it->second.active) {
-        auto end_time = std::chrono::high_resolution_clock::now();
-        insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+        if (timing_enabled_) {
+            auto end_time = std::chrono::high_resolution_clock::now();
+            insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+        }
         return false;
     }
 
@@ -281,8 +295,10 @@ bool SvcHashTable::insert(const std::string& key, const SymbolValue& value, uint
     for (size_t s = 0; s < Bucket::BUCKET_SIZE; ++s) {
         const auto& slot = buckets_[b1].entries[s];
         if (slot.occupied && !slot.tombstoned && slot.key == key && slot.scope_id == scope_id) {
-            auto end_time = std::chrono::high_resolution_clock::now();
-            insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+            if (timing_enabled_) {
+                auto end_time = std::chrono::high_resolution_clock::now();
+                insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+            }
             return false; // Duplicate prohibited
         }
     }
@@ -290,8 +306,10 @@ bool SvcHashTable::insert(const std::string& key, const SymbolValue& value, uint
     for (size_t s = 0; s < Bucket::BUCKET_SIZE; ++s) {
         const auto& slot = buckets_[b2].entries[s];
         if (slot.occupied && !slot.tombstoned && slot.key == key && slot.scope_id == scope_id) {
-            auto end_time = std::chrono::high_resolution_clock::now();
-            insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+            if (timing_enabled_) {
+                auto end_time = std::chrono::high_resolution_clock::now();
+                insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+            }
             return false; // Duplicate prohibited
         }
     }
@@ -299,8 +317,10 @@ bool SvcHashTable::insert(const std::string& key, const SymbolValue& value, uint
     for (size_t i = 0; i < STASH_SIZE; ++i) {
         const auto& slot = stash_[i];
         if (slot.occupied && !slot.tombstoned && slot.key == key && slot.scope_id == scope_id) {
-            auto end_time = std::chrono::high_resolution_clock::now();
-            insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+            if (timing_enabled_) {
+                auto end_time = std::chrono::high_resolution_clock::now();
+                insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+            }
             return false; // Duplicate prohibited
         }
     }
@@ -347,16 +367,28 @@ bool SvcHashTable::insert(const std::string& key, const SymbolValue& value, uint
     if (!tombstone_reused) {
         bool inserted = insertInternal(key, value, scope_id);
         if (!inserted) {
-            auto end_time = std::chrono::high_resolution_clock::now();
-            insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+            if (timing_enabled_) {
+                auto end_time = std::chrono::high_resolution_clock::now();
+                insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+            }
             return false;
         }
     }
 
     scope_entries_[scope_id].push_back(key);
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+    size_t active_elems = occupied_count_ - tombstone_count_;
+    peak_elements_ = std::max(peak_elements_, active_elems);
+    size_t total_slots = num_buckets_ * Bucket::BUCKET_SIZE + STASH_SIZE;
+    if (total_slots > 0) {
+        double current_lf = static_cast<double>(active_elems) / total_slots;
+        peak_load_factor_ = std::max(peak_load_factor_, current_lf);
+    }
+
+    if (timing_enabled_) {
+        auto end_time = std::chrono::high_resolution_clock::now();
+        insertion_time_ns_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+    }
 
     checkAndRebuildIfNeeded();
     return true;
@@ -508,13 +540,22 @@ void SvcHashTable::checkAndRebuildIfNeeded() {
     }
 }
 
+size_t SvcHashTable::getMemoryUsage() const {
+    return sizeof(SvcHashTable) +
+           num_buckets_ * sizeof(Bucket) +
+           scope_registry_.size() * sizeof(ScopeInfo) +
+           scope_stack_.capacity() * sizeof(uint32_t);
+}
+
 TableMetrics SvcHashTable::getMetrics() const {
     TableMetrics m;
     m.algorithm_name = getAlgorithmName();
-    m.num_elements = occupied_count_ - tombstone_count_;
+    size_t active_elems = occupied_count_ - tombstone_count_;
     size_t total_capacity = num_buckets_ * Bucket::BUCKET_SIZE + STASH_SIZE;
     m.capacity = total_capacity;
-    m.load_factor = total_capacity > 0 ? static_cast<double>(m.num_elements) / total_capacity : 0.0;
+    m.num_elements = (active_elems > 0) ? active_elems : peak_elements_;
+    double current_lf = total_capacity > 0 ? static_cast<double>(active_elems) / total_capacity : 0.0;
+    m.load_factor = (peak_load_factor_ > 0.0) ? peak_load_factor_ : current_lf;
     m.insertion_time_ns = insertion_time_ns_;
     m.lookup_time_ns = lookup_time_ns_;
     m.scope_exit_time_ns = scope_exit_time_ns_;
@@ -525,10 +566,7 @@ TableMetrics SvcHashTable::getMetrics() const {
         m.throughput_ops_sec = (static_cast<double>(total_operations_) / total_time) * 1e9;
     }
 
-    m.memory_usage_bytes = sizeof(SvcHashTable) +
-                           num_buckets_ * sizeof(Bucket) +
-                           scope_registry_.size() * sizeof(ScopeInfo) +
-                           scope_stack_.capacity() * sizeof(uint32_t);
+    m.memory_usage_bytes = getMemoryUsage();
     m.collision_count = kick_count_;
     m.successful_lookups = successful_lookups_;
     m.failed_lookups = failed_lookups_;
@@ -538,6 +576,8 @@ TableMetrics SvcHashTable::getMetrics() const {
     m.custom_metrics["svc_stash_count"] = static_cast<double>(stash_count_);
     m.custom_metrics["svc_tombstones"] = static_cast<double>(tombstone_count_);
     m.custom_metrics["svc_bucket_count"] = static_cast<double>(num_buckets_);
+    m.custom_metrics["peak_elements"] = static_cast<double>(peak_elements_);
+    m.custom_metrics["peak_load_factor"] = peak_load_factor_;
 
     return m;
 }

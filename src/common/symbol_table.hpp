@@ -48,6 +48,15 @@ public:
     // Telemetry and Identification
     virtual TableMetrics getMetrics() const = 0;
     virtual std::string getAlgorithmName() const = 0;
+
+    // Timing Control (benchmark engine can disable redundant internal per-operation clocks)
+    virtual void setTimingEnabled(bool /*enabled*/) {}
+    virtual bool isTimingEnabled() const { return true; }
+
+    // Direct O(1) state inspectors
+    virtual size_t getElementCount() const { return getMetrics().num_elements; }
+    virtual size_t getCapacity() const { return getMetrics().capacity; }
+    virtual size_t getMemoryUsage() const { return getMetrics().memory_usage_bytes; }
 };
 
 } // namespace colliscope

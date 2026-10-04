@@ -19,6 +19,9 @@ A critical pitfall in collision resolution research is treating algorithm-specif
 > 
 > Therefore, ColliScope evaluates collision resolution mechanisms using **standardized external performance metrics** (latency distributions, throughput, memory footprint, load factor), while reporting **algorithm-specific internal metrics** in their proper respective contexts.
 
+### 1.1 Latency Measurement Methodology
+Due to sub-tick CPU execution durations of in-memory hash operations (< 100 ns on a 10 MHz QueryPerformanceCounter), latency metrics are measured via run-based homogeneous operation batches (up to 16 operations) and post-trial amortization across verified wall time. All latency distributions (p50, p95, p99, min, max, mean) report **amortized batch latency per operation**, not individually measured per-operation hardware latency.
+
 ---
 
 ## 2. Common Metrics Schema (`TableMetrics`)
