@@ -21,7 +21,8 @@ class RandomTraceGenerator:
         workload_type: WorkloadType = WorkloadType.MIXED,
         load_factor: float = 0.70,
         max_scope_depth: int = 8,
-        miss_rate: float = 0.15
+        miss_rate: float = 0.15,
+        replicate_index: Optional[int] = None
     ):
         if config is not None:
             self.num_operations = config.num_operations
@@ -40,6 +41,7 @@ class RandomTraceGenerator:
 
         self.seed = seed
         self.miss_rate = miss_rate
+        self.replicate_index = replicate_index
         self.rng = random.Random(seed)
 
     @staticmethod
@@ -68,8 +70,10 @@ class RandomTraceGenerator:
         global_id_counter = 0
 
         commands.append("# ColliScope Generated Random Trace")
-        commands.append(f"# Parameters: seed={self.seed}, scope={self.scope_dimension.value}, "
-                        f"type={self.workload_type.value}, load_factor={self.load_factor}")
+        params_str = f"# Parameters: seed={self.seed}, scope={self.scope_dimension.value}, type={self.workload_type.value}"
+        if self.replicate_index is not None:
+            params_str += f", replicate={self.replicate_index}"
+        commands.append(params_str)
         commands.append("ENTER_SCOPE 0")
 
         initial_decl_count = max(5, int(self.num_operations * 0.05))

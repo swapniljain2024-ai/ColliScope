@@ -213,13 +213,13 @@ def test_matrix_assembler_cross_product(tmp_path):
         identifier_dims=[IdentifierDimension.RANDOM, IdentifierDimension.FREQUENCY_MATCHED],
         scope_dims=[ScopeDimension.FLAT, ScopeDimension.NESTED],
         workload_types=[WorkloadType.DECLARATION_HEAVY, WorkloadType.LOOKUP_HEAVY],
-        load_factors=[0.70],
+        num_replicates=2,
         num_operations=100
     )
 
-    # 2 x 2 x 2 x 1 = 8 traces expected
-    assert manifest["total_traces"] == 8
-    assert len(manifest["traces"]) == 8
+    # 2 ID dims x 2 scope dims x 2 workload types x 2 replicates = 16 traces expected
+    assert manifest["total_traces"] == 16
+    assert len(manifest["traces"]) == 16
 
     manifest_file = os.path.join(output_dir, "manifest.json")
     assert os.path.exists(manifest_file)
@@ -237,9 +237,56 @@ def test_manifest_integrity():
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
-    assert manifest["total_traces"] == len(manifest["traces"])
-    assert manifest["total_traces"] >= 18 # Standard matrix present
+    # 1. Total authoritative matrix trace count must be exactly 38
+    assert manifest["total_traces"] == 38
+    assert len(manifest["traces"]) == 38
 
-    for entry in manifest["traces"]:
+    traces = manifest["traces"]
+    synthetic_traces = [t for t in traces if t.get("identifier_dimension") != "real-source"]
+    real_traces = [t for t in traces if t.get("identifier_dimension") == "real-source"]
+    random_traces = [t for t in traces if t.get("identifier_dimension") == "random"]
+    freq_traces = [t for t in traces if t.get("identifier_dimension") == "frequency-matched"]
+
+    # 2. Partition counts: 36 synthetic (18 random + 18 freq-matched) + 2 real-source
+    assert len(synthetic_traces) == 36
+    assert len(real_traces) == 2
+    assert len(random_traces) == 18
+    assert len(freq_traces) == 18
+
+    # 3. No synthetic or real trace has a nominal load-factor field
+    for t in traces:
+        assert "load_factor" not in t, f"Nominal load_factor found in {t['trace_file']}"
+
+    # 4. Real-source traces are not assigned synthetic workload types
+    for t in real_traces:
+        assert "workload_type" not in t, f"Synthetic workload_type found on real-source {t['trace_file']}"
+        assert "replicate_index" not in t, f"Synthetic replicate_index found on real-source {t['trace_file']}"
+        assert t.get("source_corpus") == "cJSON"
+
+    # 5. Each synthetic condition has exactly 3 deterministic replicates (rep1, rep2, rep3)
+    conditions = {}
+    for t in synthetic_traces:
+        cond_key = (t["identifier_dimension"], t["scope_dimension"], t["workload_type"])
+        conditions.setdefault(cond_key, []).append(t["replicate_index"])
+        assert "seed" in t
+
+    assert len(conditions) == 12  # 2 ID dims x 2 scope dims x 3 workload mixes = 12 conditions
+    for cond_key, reps in conditions.items():
+        assert sorted(reps) == [1, 2, 3], f"Condition {cond_key} does not have exactly rep1, rep2, rep3"
+
+    # 6. Verify distinct trace contents and absence of duplicates
+    trace_hashes = {}
+    for entry in traces:
         trace_file = os.path.join("workloads", "traces", entry["trace_file"])
         assert os.path.exists(trace_file), f"Trace file {trace_file} listed in manifest but not found"
+        with open(trace_file, "rb") as fp:
+            import hashlib
+            h = hashlib.sha256(fp.read()).hexdigest()
+        assert h not in trace_hashes, f"Duplicate trace content detected between {entry['trace_file']} and {trace_hashes[h]}"
+        trace_hashes[h] = entry["trace_file"]
+
+    # 7. sample_lexical.trace remains outside the authoritative experimental matrix
+    manifest_filenames = set(t["trace_file"] for t in traces)
+    assert "sample_lexical.trace" not in manifest_filenames
+    sample_path = os.path.join("workloads", "traces", "sample_lexical.trace")
+    assert os.path.exists(sample_path), "sample_lexical.trace must exist as a functional unit-test fixture"

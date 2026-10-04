@@ -24,7 +24,8 @@ class FrequencyMatchedTraceGenerator:
         max_scope_depth: int = 8,
         zipf_s: float = 1.244,
         num_symbols: int = 300,
-        miss_rate: float = 0.15
+        miss_rate: float = 0.15,
+        replicate_index: Optional[int] = None
     ):
         if config is not None:
             self.num_operations = config.num_operations
@@ -45,6 +46,7 @@ class FrequencyMatchedTraceGenerator:
         self.zipf_s = zipf_s
         self.num_symbols = num_symbols
         self.miss_rate = miss_rate
+        self.replicate_index = replicate_index
         self.rng = random.Random(seed)
         self.np_rng = np.random.default_rng(seed)
 
@@ -75,9 +77,10 @@ class FrequencyMatchedTraceGenerator:
 
         commands: List[str] = []
         commands.append("# ColliScope Frequency-Matched Synthetic Trace")
-        commands.append(f"# Parameters: seed={self.seed}, zipf_s={self.zipf_s:.3f}, "
-                        f"scope={self.scope_dimension.value}, type={self.workload_type.value}, "
-                        f"load_factor={self.load_factor}")
+        params_str = f"# Parameters: seed={self.seed}, zipf_s={self.zipf_s:.3f}, scope={self.scope_dimension.value}, type={self.workload_type.value}"
+        if self.replicate_index is not None:
+            params_str += f", replicate={self.replicate_index}"
+        commands.append(params_str)
         commands.append("ENTER_SCOPE 0")
 
         synthetic_pool = self._generate_synthetic_pool()

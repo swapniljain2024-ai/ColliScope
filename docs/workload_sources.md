@@ -63,3 +63,34 @@ ColliScope strictly enforces research data integrity and explicit workload categ
 3. **External/Unresolved Symbol Isolation:** Symbols referenced in the translation unit without a local declaration (e.g. standard library functions `malloc`, `free`, `memcpy`, standard macros `NULL`, `false`, `true`) are isolated and preserved as unresolved `REFERENCE` operations rather than artificially fabricated `DECLARE` operations. This avoids distorting in-unit declaration statistics while accurately representing the negative lookups encountered by compiler frontends when querying external or unresolved symbols.
 4. **Lexical Shadowing:** Variables declared in nested blocks with the same name as outer variables correctly resolve to the inner declaration during active block execution.
 
+---
+
+## 4. Authoritative Experimental Matrix & Methodology Correction
+
+### 4.1. Dataset Composition (38 Authoritative Traces)
+The experimental evaluation matrix consists of exactly **38 authoritative execution traces**:
+
+1. **Synthetic Matrix (36 Traces):**
+   - **2 Identifier Distributions:** Uniform Random (`random`), Zipfian Skewed (`frequency-matched`, $s = 1.244$).
+   - **2 Lexical Scope Modes:** Flat (`flat`), Hierarchical Nested (`nested`).
+   - **3 Operation Mixes:** Declaration-Heavy (`declaration-heavy`, 60% insert / 30% lookup / 10% scope), Lookup-Heavy (`lookup-heavy`, 10% insert / 80% lookup / 10% scope), Balanced Mixed (`mixed`, 40% insert / 50% lookup / 10% scope).
+   - **3 Deterministic Seed Replicates:** Replicate 1 (`rep1`), Replicate 2 (`rep2`), Replicate 3 (`rep3`).
+   $$\text{Total Synthetic} = 2 \times 2 \times 3 \times 3 = 36\text{ traces}$$
+
+2. **Authentic Real-Source Traces (2 Traces):**
+   - `trace_real-source_flat.trace`: Extracted AST translation unit mapped to flat global scope.
+   - `trace_real-source_nested.trace`: Extracted AST translation unit preserving authentic function and compound block lexical nesting.
+   $$\text{Total Real-Source} = 2\text{ traces}$$
+
+$$\mathbf{\text{Total Authoritative Experimental Dataset}} = 36 + 2 = \mathbf{38\text{ traces}}$$
+
+*(Note: `sample_lexical.trace` is a Phase 4 functional oracle test fixture used in unit testing and is excluded from the authoritative experimental benchmark dataset).*
+
+### 4.2. Removal of Nominal Load-Factor Labels
+- In earlier Phase 5 iterations, traces were labeled with nominal suffixes (`_lf50`, `_lf70`, `_lf90`).
+- An experimental design audit established that these suffixes were purely nominal labels that did not parameterize or control actual benchmark table load factors; in synthetic generators, they functioned solely as PRNG seed offsets, while in real-source extraction, they caused identical traces to be duplicated 9-fold (pseudoreplication).
+- Consequently, `load_factor` has been **completely removed as an experimental generation factor**.
+- Synthetic variations are now explicitly and honestly represented as **deterministic seed replicates** (`rep1`, `rep2`, `rep3`).
+- In dynamic compiler symbol tables, load factor is an emergent algorithmic property; actual **peak load factor** and capacity trajectories are measured directly as empirical benchmark outputs by the Phase 6 benchmark engine, rather than assumed via synthetic labels.
+
+
