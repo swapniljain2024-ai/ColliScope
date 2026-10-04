@@ -10,7 +10,7 @@
 ## 1. Initial State Inspection
 
 Prior to Phase 0 execution, the environment was thoroughly inspected:
-- **Local Directory:** `C:\Users\Hp\Desktop\ColliScope`
+- **Local Directory:** `<project-root>` (ColliScope repository root)
   - Contained only one file: `ColliScope_Master_Agent_Prompt (1).pdf` (the master execution manual).
   - No existing source code, scripts, build configurations, or tests existed.
   - No local Git repository was initialized.
@@ -20,7 +20,7 @@ Prior to Phase 0 execution, the environment was thoroughly inspected:
 - **Local Toolchain & Environment:**
   - **OS:** Windows 10/11 x64
   - **Python:** Python 3.12.5 with `pip 24.2`
-  - **C++ Compiler:** MinGW-W64 GCC 8.1.0 (`g++`, `gcc`, `mingw32-make`) located at `C:\Program Files\CodeBlocks\MinGW\bin`
+  - **C++ Compiler:** MinGW-W64 GCC 8.1.0 (`g++`, `gcc`, `mingw32-make`)
   - **Version Control:** Git 2.50.1.windows.1, GitHub CLI 2.67.0
 
 ---

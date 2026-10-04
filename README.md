@@ -14,16 +14,16 @@
 Compiler symbol tables encounter distinct access patterns characterized by non-uniform identifier frequencies, bursty declaration/reference ratios, and deep lexical scope hierarchies with shadowing and scope exits. Traditional collision resolution studies often rely on uniform random keys in flat namespaces, obscuring real-world compiler performance dynamics.
 
 **ColliScope** addresses this gap through two connected contributions:
-1. **Workload-Aware Experimental Framework:** A systematic evaluation methodology that characterizes compiler-like workloads across identifier distributions (real open-source C/C++, Zipf-like synthetic, and uniform random), lexical scoping dimensions (flat vs. nested), operation mixes (declaration-heavy, lookup-heavy, mixed), and configurable load factors.
-2. **SVC-Hash (Scope-Aware Variant Cuckoo Hash):** A novel, scope-aware extension of cuckoo hashing engineered specifically for compiler symbol-table operations, featuring bucketized storage, lexical hierarchy tracking, and efficient shadowing resolution.
+1. **Workload-Aware Experimental Framework:** A systematic evaluation methodology characterizing compiler-like workloads across identifier distributions (authentic open-source C/C++, Zipfian frequency-matched synthetic, and uniform random), lexical scoping dimensions (flat vs. nested), operation mixes (declaration-heavy, lookup-heavy, mixed), and observed emergent load factors.
+2. **SVC-Hash (Scope-Versioned Cuckoo Hash):** A scope-aware extension of cuckoo hashing engineered specifically for compiler symbol-table operations, featuring bucketized storage, parent-chain scope traversal, and deferred tombstone compaction.
 
 ### Benchmark Set
 - **Baselines:**
-  1. Separate Chaining
-  2. Plain Cuckoo Hashing (critical ablation baseline)
-  3. Hopscotch Hashing
+  1. Separate Chaining (`chaining` / `scoped_chaining`)
+  2. Plain Cuckoo Hashing (`cuckoo` / `scoped_cuckoo`) (critical ablation baseline)
+  3. Hopscotch Hashing (`hopscotch` / `scoped_hopscotch`)
 - **Proposed:**
-  4. SVC-Hash (Scope-aware Variant Cuckoo Hash)
+  4. SVC-Hash (`svc_hash`) (Scope-Versioned Cuckoo Hash)
 
 *(Note: Linear Probing, Quadratic Probing, Double Hashing, and Robin Hood Hashing are explicitly excluded.)*
 
@@ -38,19 +38,19 @@ ColliScope/
 |   |-- chaining/        # Separate Chaining baseline
 |   |-- cuckoo/          # Plain Cuckoo baseline
 |   |-- hopscotch/       # Hopscotch baseline
-|   `-- svc_hash/        # Scope-Aware Cuckoo Hash (SVC-Hash)
+|   `-- svc_hash/        # Scope-Versioned Cuckoo Hash (SVC-Hash)
 |-- workloads/           # Workload extraction and trace generation
-|   |-- traces/          # Deterministic machine-readable execution traces
-|   |-- real_source/     # Real C/C++ corpora and provenance documentation
+|   |-- traces/          # Deterministic machine-readable execution traces (38 authoritative)
+|   |-- real_source/     # Real C/C++ corpora and provenance documentation (cJSON v1.7.18)
 |   `-- generators/      # Random, frequency-matched, and matrix generators
 |-- benchmarks/          # Trace-driven benchmark runner and experiment engine
 |-- tests/               # Test suites
-|   |-- cpp/             # C++ correctness and unit tests
-|   `-- python/          # Python pytest suite
-|-- analysis/            # Statistical analysis (mean, stdev, CI, p95/p99, effect sizes)
-|-- dashboard/           # Interactive Streamlit + Plotly research dashboard
-|-- results/             # Raw experiment logs, CSV/JSON runs, and report assets
-|-- docs/                # Architectural specs, audit reports, and design decisions
+|   |-- cpp/             # C++ correctness and Catch2 unit tests (32 test cases, 6,449 assertions)
+|   `-- python/          # Python pytest suite (28 tests)
+|-- analysis/            # Statistical analysis (Wilcoxon signed-rank, Holm correction, bootstrap CIs)
+|-- dashboard/           # Interactive Streamlit + Plotly research dashboard (10 pages)
+|-- results/             # Authoritative benchmark results (Phase 7) and statistical outputs (Phase 8)
+|-- docs/                # Architectural specs, audit reports, and methodology documentation
 |-- CMakeLists.txt       # Root CMake build definition
 |-- requirements.txt     # Python dependencies
 `-- README.md            # Project documentation
@@ -58,7 +58,7 @@ ColliScope/
 
 ---
 
-## Build and Test Instructions
+## Build, Test, and Execution Instructions
 
 ### Prerequisites
 - C++17 compatible compiler (e.g., MinGW-W64 GCC 8.1+ or Clang/MSVC)
@@ -75,28 +75,54 @@ python -m pip install -r requirements.txt
 ### 2. C++ Build (MinGW / CMake)
 Configure and compile the project using CMake:
 ```powershell
-# Using MinGW Makefiles (adjust compiler path if needed)
 cmake -B build -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER="g++"
 cmake --build build
 ```
 
-To run C++ unit tests:
+To run C++ unit tests (32 test cases, 6,449 assertions):
 ```powershell
+# Run with CTest:
 ctest --test-dir build --output-on-failure
-# Or directly run the test binary:
-./build/tests/test_scaffolding.exe
+
+# Or run the Catch2 binary directly:
+.\build\tests\colliscope_tests.exe
 ```
 
 ### 3. Python Tests
-Execute the Python test suite using pytest:
+Execute the Python test suite (28 tests across baselines, generators, traces, and dashboard):
 ```powershell
 python -m pytest tests/python -v
 ```
 
+### 4. Running the Benchmark Engine
+To benchmark algorithms on a workload trace using the compiled benchmark executable:
+```powershell
+python benchmarks/run_benchmarks.py --trace workloads/traces/trace_real-source_nested.trace --repetitions 10 --warmup 3
+```
+
+### 5. Reproducing Statistical Analysis
+To run the full Phase 8 non-parametric statistical hypothesis testing pipeline:
+```powershell
+python analysis/phase8_statistical_analysis.py
+```
+*(Produces all tables, Wilcoxon test results, Holm corrections, effect sizes, and publication figures in `results/phase8/`)*.
+
+### 6. Launching the Interactive Research Dashboard
+To explore the authoritative benchmark data, statistical tests, and case studies:
+```powershell
+streamlit run dashboard/app.py
+```
+
 ---
 
-## Research Integrity & Provenance
-ColliScope strictly enforces research integrity:
-- Every workload labeled **REAL** originates directly from documented open-source C/C++ repositories with recorded repository URLs, commit hashes, licenses, and file lists.
-- Synthetic workloads are explicitly labeled as **SYNTHETIC** or **FREQUENCY-MATCHED SYNTHETIC**.
-- Performance metrics are gathered across repeated trials with confidence intervals and verified against an oracle implementation before evaluation.
+## Research Invariants & Key Findings
+
+1. **Experimental Workload Dataset:**
+   - **38 Authoritative Traces:** 36 synthetic factorial traces (2 identifier distributions $\times$ 2 scope modes $\times$ 3 operation mixes $\times$ 3 deterministic seed replicates) + 2 authentic real-source traces (`cJSON` v1.7.18 flat and nested).
+   - **Unit of Inference:** $N=36$ independent workload units (replicates). The 10 timed repetitions per trace are aggregated via median to estimate measurement variance and are **not** treated as independent observations.
+   - **Observed Load Factor:** Load factor is strictly an emergent output metric, not an experimental input.
+
+2. **Core Research Findings:**
+   - **Where Baselines Excel:** Under flat, lookup-heavy workloads with Zipfian frequency skew, Separate Chaining (median 445,959 ops/sec) and Hopscotch (median 554,809 ops/sec) significantly outperform SVC-Hash (median 221,243 ops/sec) due to low per-probe overhead and cache locality.
+   - **Where SVC-Hash Excels:** Under hierarchical nested scopes, SVC-Hash significantly outperforms Scoped Cuckoo ($p < 0.001$, $r = 1.0$), Scoped Chaining ($p = 0.0269$, $r = 0.608$), and Scoped Hopscotch ($p = 0.0383$, $r = 0.569$) because its virtualized scope-interval mechanism eliminates the allocation and deallocation overheads of recursive table wrappers.
+   - **Real-Source Case Study:** On nested `cJSON` v1.7.18, SVC-Hash achieves 734,949 ops/sec (a 1.76$\times$ speedup over Scoped Chaining and 3.71$\times$ over Scoped Cuckoo) while maintaining a compact memory footprint. On flat `cJSON`, Chaining and Hopscotch achieve ~5.6$\times$ higher throughput. Evaluated strictly as a descriptive case study of one real project under two scope representations.
