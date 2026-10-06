@@ -18,6 +18,8 @@ pip install -r requirements.txt
 ### Launching the Dashboard
 Launch the dashboard from the workspace root directory:
 ```bash
+python -m streamlit run dashboard/app.py
+# Or if streamlit is directly on PATH:
 streamlit run dashboard/app.py
 ```
 By default, the dashboard runs on `http://localhost:8501`.

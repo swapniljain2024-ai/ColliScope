@@ -110,6 +110,8 @@ python analysis/phase8_statistical_analysis.py
 ### 6. Launching the Interactive Research Dashboard
 To explore the authoritative benchmark data, statistical tests, and case studies:
 ```powershell
+python -m streamlit run dashboard/app.py
+# Or if streamlit is on your PATH:
 streamlit run dashboard/app.py
 ```
 
