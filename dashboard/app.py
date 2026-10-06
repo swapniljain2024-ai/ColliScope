@@ -23,6 +23,7 @@ from dashboard.views.statistical_evidence import render_statistical_evidence
 from dashboard.views.cjson_case_study import render_cjson_case_study
 from dashboard.views.trace_explorer import render_trace_explorer
 from dashboard.views.methodology import render_methodology
+from dashboard.views.interactive_lab import render_interactive_lab
 
 
 def main():
@@ -33,20 +34,20 @@ def main():
         initial_sidebar_state="expanded"
     )
 
-    # Custom styling for research aesthetic
+    # Custom styling for research aesthetic (fully compatible with light and dark themes)
     st.markdown("""
     <style>
         /* Base typography & layout adjustments */
         .main .block-container {
-            padding-top: 2rem;
+            padding-top: 1.5rem;
             padding-bottom: 3rem;
             max-width: 1300px;
         }
-        
-        /* Metric card styling */
+
+        /* Metric card styling — theme adaptive */
         div[data-testid="stMetric"] {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background-color: var(--secondary-background-color);
+            border: 1px solid rgba(128, 128, 128, 0.2);
             padding: 12px 16px;
             border-radius: 8px;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -54,37 +55,91 @@ def main():
         div[data-testid="stMetricLabel"] {
             font-size: 13px !important;
             font-weight: 600 !important;
-            color: #475569 !important;
+            color: var(--text-color) !important;
+            opacity: 0.8;
         }
         div[data-testid="stMetricValue"] {
             font-size: 24px !important;
             font-weight: 700 !important;
-            color: #0f172a !important;
+            color: var(--text-color) !important;
         }
 
-        /* Sidebar styling */
+        /* Sidebar styling — inherit theme colors naturally */
         section[data-testid="stSidebar"] {
-            background-color: #f8fafc;
-            border-right: 1px solid #e2e8f0;
+            border-right: 1px solid rgba(128, 128, 128, 0.2);
         }
         section[data-testid="stSidebar"] .block-container {
-            padding-top: 2rem;
+            padding-top: 1.5rem;
+        }
+
+        /* Sidebar radio navigation — crisp text in both light and dark modes */
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] label {
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: background-color 0.15s ease;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
+            background-color: rgba(128, 128, 128, 0.12);
+        }
+        section[data-testid="stSidebar"] div[data-testid="stRadio"] label p {
+            font-weight: 500 !important;
+            font-size: 13.5px !important;
+            color: var(--text-color) !important;
         }
 
         /* Table header enhancements */
         thead tr th {
             font-weight: 700 !important;
-            background-color: #f1f5f9 !important;
-            color: #1e293b !important;
+            background-color: var(--secondary-background-color) !important;
+            color: var(--text-color) !important;
+            border-bottom: 2px solid rgba(128, 128, 128, 0.2) !important;
+        }
+
+        /* Reusable research UI cards */
+        .research-card {
+            background-color: var(--secondary-background-color);
+            border: 1px solid rgba(128, 128, 128, 0.2);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .research-callout {
+            background-color: rgba(59, 130, 246, 0.08);
+            border-left: 4px solid #3b82f6;
+            border-radius: 0 8px 8px 0;
+            padding: 14px 18px;
+            margin: 14px 0;
+            color: var(--text-color);
+        }
+        .research-callout-warning {
+            background-color: rgba(245, 158, 11, 0.08);
+            border-left: 4px solid #f59e0b;
+            border-radius: 0 8px 8px 0;
+            padding: 14px 18px;
+            margin: 14px 0;
+            color: var(--text-color);
+        }
+        .nav-category-badge {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(128, 128, 128, 0.15);
+            color: var(--text-color);
+            margin-bottom: 6px;
+            display: inline-block;
         }
     </style>
     """, unsafe_allow_html=True)
 
     # Sidebar Header & Navigation
     st.sidebar.markdown("""
-    <div style="padding-bottom: 15px; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
-        <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #0f172a;">🔬 ColliScope</h2>
-        <span style="font-size: 12px; color: #64748b; font-weight: 500;">Symbol Table Research Dashboard</span>
+    <div style="padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 800;">🔬 ColliScope</h2>
+        <span style="font-size: 12px; opacity: 0.7; font-weight: 500;">Symbol Table Research & Demo Tool</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -98,7 +153,8 @@ def main():
         "7. Statistical Evidence",
         "8. Real-Source Case Study",
         "9. Trace / Operation Explorer",
-        "10. Methodology / About"
+        "10. Methodology / About",
+        "11. Interactive Symbol Table Lab"
     ]
 
     selected_page = st.sidebar.radio(
@@ -111,7 +167,7 @@ def main():
     # Sidebar Provenance Metadata
     st.sidebar.markdown("---")
     st.sidebar.markdown("""
-    <div style="font-size: 11.5px; color: #64748b; line-height: 1.5;">
+    <div style="font-size: 11px; opacity: 0.75; line-height: 1.5;">
         <strong>Authoritative Dataset:</strong> Phase 7 Campaign<br>
         <strong>Statistical Suite:</strong> Phase 8 Locked<br>
         <strong>Traces:</strong> 38 (36 Synthetic + 2 cJSON)<br>
@@ -142,7 +198,10 @@ def main():
         render_trace_explorer()
     elif selected_page == "10. Methodology / About":
         render_methodology()
+    elif selected_page == "11. Interactive Symbol Table Lab":
+        render_interactive_lab()
 
 
 if __name__ == "__main__":
     main()
+

@@ -52,12 +52,12 @@ def render_overview():
 
     with rq_col1:
         st.markdown("""
-        <div style="background: #f1f5f9; padding: 18px; border-radius: 8px; border: 1px solid #cbd5e1; height: 100%;">
-            <h4 style="color: #1e3a8a; margin-top: 0;">RQ1: Symbol-Table Workloads vs Baselines</h4>
-            <p style="font-size: 14px; color: #334155;">
+        <div class="research-card" style="height: 100%;">
+            <h4 style="margin-top: 0; color: #3b82f6; font-size: 16px; border-bottom: 2px solid rgba(59,130,246,0.3); padding-bottom: 6px;">RQ1: Symbol-Table Workloads vs Baselines</h4>
+            <p style="font-size: 14px; opacity: 0.9;">
                 <em>How do collision-resolution techniques behave under realistic compiler-symbol-table-like workloads compared with synthetic workload characteristics?</em>
             </p>
-            <ul style="font-size: 13.5px; color: #1e293b; padding-left: 18px;">
+            <ul style="font-size: 13.5px; opacity: 0.95; padding-left: 18px; line-height: 1.6;">
                 <li><strong>Cache Locality Wins on Flat Code:</strong> On flat, frequency-skewed traces, Separate Chaining (1.82M op/s) and Hopscotch (1.84M op/s) lead due to hot L1 CPU cache residency for frequently referenced symbols.</li>
                 <li><strong>Cuckoo Relocation Pathology:</strong> Plain Cuckoo hashing suffers severe throughput degradation (166k–353k op/s) due to cascading relocation kicks and rehashes under dense symbol insertions.</li>
                 <li><strong>SVC-Hash Open-Addressing Robustness:</strong> In frequency-matched synthetic workloads, SVC-Hash significantly outperforms Cuckoo (<strong>39.6% median speedup</strong>, Holm-adj <em>p</em> = 0.00158).</li>
@@ -67,12 +67,12 @@ def render_overview():
 
     with rq_col2:
         st.markdown("""
-        <div style="background: #f1f5f9; padding: 18px; border-radius: 8px; border: 1px solid #cbd5e1; height: 100%;">
-            <h4 style="color: #1e3a8a; margin-top: 0;">RQ2: Scope-Aware Hashing (SVC-Hash)</h4>
-            <p style="font-size: 14px; color: #334155;">
+        <div class="research-card" style="height: 100%;">
+            <h4 style="margin-top: 0; color: #10b981; font-size: 16px; border-bottom: 2px solid rgba(16,185,129,0.3); padding-bottom: 6px;">RQ2: Scope-Aware Hashing (SVC-Hash)</h4>
+            <p style="font-size: 14px; opacity: 0.9;">
                 <em>How does SVC-Hash behave under lexical nesting/shadowing workloads compared with baseline approaches?</em>
             </p>
-            <ul style="font-size: 13.5px; color: #1e293b; padding-left: 18px;">
+            <ul style="font-size: 13.5px; opacity: 0.95; padding-left: 18px; line-height: 1.6;">
                 <li><strong>Scoped Baseline Degradation:</strong> Baseline multi-table wrappers degrade by <strong>61% to 64%</strong> when moving from flat to nested scopes due to scope-stack traversal overhead.</li>
                 <li><strong>SVC-Hash Outperforms Scoped Cuckoo:</strong> In nested synthetic scopes, SVC-Hash delivers a statistically significant <strong>70.8% median speedup</strong> over Scoped Cuckoo (Holm-adj <em>p</em> = 0.00193).</li>
                 <li><strong>Real-Source Inversion on cJSON Nested:</strong> On authentic nested code, SVC-Hash achieves <strong>highest throughput of all algorithms (734.9k op/s)</strong>: 1.76x over Scoped Chaining, 2.64x over Scoped Hopscotch, 3.71x over Scoped Cuckoo, while requiring the lowest peak memory (<strong>8.0 KB</strong>).</li>
@@ -125,6 +125,8 @@ def render_overview():
     )
     fig.update_layout(
         template="plotly_white",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         font=dict(size=12),
         margin=dict(l=40, r=40, t=50, b=40),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
@@ -143,4 +145,5 @@ def render_overview():
     - **Real-Source Case Study:** Dedicated examination of cJSON v1.7.18 (flat compilation unit vs authentic nested lexical scopes).
     - **Trace / Operation Explorer:** Deep-dive into individual traces with per-trace performance tables and command histograms.
     - **Methodology / About:** Comprehensive documentation of the benchmark protocol, timer architecture, and threats to validity.
+    - **Interactive Symbol Table Lab:** Live educational demonstration tool with step-by-step operation execution, visual scope trees, bucket slot inspector, and native C++ verification.
     """)

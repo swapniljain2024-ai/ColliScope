@@ -62,11 +62,11 @@ def render_svc_analysis():
                     tag_color = "#b91c1c" # red
 
                 st.markdown(f"""
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 10px;">
-                    <div style="font-weight: 700; color: #334155; font-size: 15px;">{label}</div>
-                    <div style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 4px 0;">{med_ratio:.2f}x</div>
-                    <div style="font-size: 12px; color: #64748b;">95% Bootstrap CI: [{ci_low:.2f}x, {ci_high:.2f}x]</div>
-                    <div style="font-size: 12px; color: #64748b;">Rank-Biserial r: {r_rb:+.2f}</div>
+                <div class="research-card" style="margin-bottom: 10px;">
+                    <div style="font-weight: 700; font-size: 15px;">{label}</div>
+                    <div style="font-size: 26px; font-weight: 800; margin: 4px 0;">{med_ratio:.2f}x</div>
+                    <div style="font-size: 12px; opacity: 0.75;">95% Bootstrap CI: [{ci_low:.2f}x, {ci_high:.2f}x]</div>
+                    <div style="font-size: 12px; opacity: 0.75;">Rank-Biserial r: {r_rb:+.2f}</div>
                     <div style="margin-top: 8px; font-size: 11px; font-weight: 700; color: {tag_color}; text-transform: uppercase;">● {tag}</div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -88,6 +88,8 @@ def render_svc_analysis():
     fig_ratio.add_hline(y=1.0, line_dash="dash", line_color="red", annotation_text="Parity (1.0x)", annotation_position="bottom right")
     fig_ratio.update_layout(
         template="plotly_white",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         xaxis_title="Baseline Algorithm Family",
         yaxis_title="Throughput Speedup Ratio (SVC / Baseline)",
         showlegend=False,

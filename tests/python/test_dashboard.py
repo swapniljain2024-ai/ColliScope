@@ -88,7 +88,7 @@ def test_cjson_case_study_integrity():
 
 
 def test_views_importable():
-    """Verify all 10 page view modules can be imported cleanly."""
+    """Verify all 11 page view modules can be imported cleanly."""
     from dashboard.views.overview import render_overview
     from dashboard.views.dataset_explorer import render_dataset_explorer
     from dashboard.views.workload_explorer import render_workload_explorer
@@ -99,6 +99,7 @@ def test_views_importable():
     from dashboard.views.cjson_case_study import render_cjson_case_study
     from dashboard.views.trace_explorer import render_trace_explorer
     from dashboard.views.methodology import render_methodology
+    from dashboard.views.interactive_lab import render_interactive_lab
 
     assert callable(render_overview)
     assert callable(render_dataset_explorer)
@@ -110,6 +111,7 @@ def test_views_importable():
     assert callable(render_cjson_case_study)
     assert callable(render_trace_explorer)
     assert callable(render_methodology)
+    assert callable(render_interactive_lab)
 
 
 def test_all_dashboard_pages_render():
@@ -130,7 +132,8 @@ def test_all_dashboard_pages_render():
         "7. Statistical Evidence",
         "8. Real-Source Case Study",
         "9. Trace / Operation Explorer",
-        "10. Methodology / About"
+        "10. Methodology / About",
+        "11. Interactive Symbol Table Lab"
     ]
 
     for page in nav_options:

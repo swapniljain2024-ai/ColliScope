@@ -16,13 +16,13 @@ def render_cjson_case_study():
 
     # Provenance Card & Explicit Descriptive Label
     st.markdown("""
-    <div style="background: #f8fafc; border-left: 5px solid #0284c7; padding: 18px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #cbd5e1;">
-        <h4 style="margin-top: 0; color: #0369a1;">cJSON v1.7.18 Software Corpus Provenance</h4>
-        <p style="font-size: 14px; margin: 4px 0; color: #334155;">
+    <div class="research-callout" style="margin-bottom: 20px;">
+        <h4 style="margin-top: 0; color: #0284c7;">cJSON v1.7.18 Software Corpus Provenance</h4>
+        <p style="font-size: 14px; margin: 4px 0; opacity: 0.9;">
             <strong>Repository:</strong> <a href="https://github.com/DaveGamble/cJSON.git" target="_blank">https://github.com/DaveGamble/cJSON.git</a><br>
             <strong>Version:</strong> v1.7.18 | <strong>Commit:</strong> <code>acc76239bee01d8e9c858ae2cab296704e52d916</code> | <strong>License:</strong> MIT
         </p>
-        <div style="background: #e0f2fe; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 13.5px; color: #075985;">
+        <div style="background: rgba(2, 132, 199, 0.12); border-radius: 6px; padding: 10px; margin-top: 10px; font-size: 13.5px;">
             <strong>DESCRIPTIVE CASE STUDY ONLY:</strong> These traces represent <strong>ONE software project</strong> evaluated under <strong>TWO scope representations</strong> (flat global compilation unit vs genuine Clang AST lexical block scopes). They do not constitute independent random samples and are analyzed strictly as descriptive evidence without inferential <em>p</em>-values.
         </div>
     </div>
