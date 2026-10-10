@@ -102,6 +102,21 @@ def test_views_importable():
     assert callable(render_experimental_results)
 
 
+def test_view_functions_execute_directly():
+    """Directly execute each section renderer to guarantee zero column KeyErrors or runtime issues."""
+    from dashboard.views.overview import render_overview
+    from dashboard.views.interactive_lab import render_interactive_lab
+    from dashboard.views.algorithm_comparison import render_algorithm_comparison
+    from dashboard.views.scope_and_svc import render_scope_and_svc
+    from dashboard.views.experimental_results import render_experimental_results
+
+    render_overview()
+    render_interactive_lab()
+    render_algorithm_comparison()
+    render_scope_and_svc()
+    render_experimental_results()
+
+
 def test_all_dashboard_pages_render():
     """Verify that every single dashboard section renders without unhandled exceptions."""
     from streamlit.testing.v1 import AppTest

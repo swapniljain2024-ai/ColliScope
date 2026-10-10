@@ -118,17 +118,23 @@ def render_experimental_results():
         # Effect Sizes Summary Table
         st.markdown("#### Primary Effect Sizes & Bootstrap Confidence Intervals")
         st.dataframe(
-            df_effects[["stratum", "baseline_family", "n_pairs", "median_speedup_ratio", "speedup_ratio_ci95_low", "speedup_ratio_ci95_high", "rank_biserial_r", "r_ci95_low", "r_ci95_high"]],
+            df_effects[[
+                "stratum", "baseline_family", "n_workload_replicates",
+                "median_speedup_ratio", "speedup_ratio_ci95_low", "speedup_ratio_ci95_high",
+                "median_throughput_diff_ops_sec", "diff_ci95_low", "diff_ci95_high",
+                "rank_biserial_r"
+            ]],
             column_config={
                 "stratum": "Stratum",
                 "baseline_family": "Baseline",
-                "n_pairs": "N (Pairs)",
+                "n_workload_replicates": "N (Units)",
                 "median_speedup_ratio": st.column_config.NumberColumn("Median Speedup", format="%.2fx"),
                 "speedup_ratio_ci95_low": st.column_config.NumberColumn("CI 95% Low", format="%.2fx"),
                 "speedup_ratio_ci95_high": st.column_config.NumberColumn("CI 95% High", format="%.2fx"),
+                "median_throughput_diff_ops_sec": st.column_config.NumberColumn("Median Diff (op/s)", format="%+.0f"),
+                "diff_ci95_low": st.column_config.NumberColumn("Diff CI Low", format="%+.0f"),
+                "diff_ci95_high": st.column_config.NumberColumn("Diff CI High", format="%+.0f"),
                 "rank_biserial_r": st.column_config.NumberColumn("Rank-Biserial r", format="%+.2f"),
-                "r_ci95_low": st.column_config.NumberColumn("r CI Low", format="%+.2f"),
-                "r_ci95_high": st.column_config.NumberColumn("r CI High", format="%+.2f"),
             },
             use_container_width=True,
             hide_index=True
@@ -187,13 +193,13 @@ def render_experimental_results():
         # Full cJSON table
         st.markdown("#### cJSON Comprehensive Metric Comparison")
         st.dataframe(
-            df_cjson[["trace_name", "scope_mode", "algorithm_name", "throughput_ops_sec", "total_time_median_us", "lookup_p50_ns", "insert_p50_ns", "peak_memory_kb", "peak_load_factor"]],
+            df_cjson[["trace_name", "scope_mode", "algorithm_name", "throughput_ops_sec", "total_time_us", "lookup_p50_ns", "insert_p50_ns", "peak_memory_kb", "peak_load_factor"]],
             column_config={
                 "trace_name": "Trace",
                 "scope_mode": "Scope",
                 "algorithm_name": "Algorithm",
                 "throughput_ops_sec": st.column_config.NumberColumn("Throughput (op/s)", format="%.0f"),
-                "total_time_median_us": st.column_config.NumberColumn("Total Time (us)", format="%.1f"),
+                "total_time_us": st.column_config.NumberColumn("Total Time (us)", format="%.1f"),
                 "lookup_p50_ns": st.column_config.NumberColumn("Lookup p50 (ns)", format="%.0f"),
                 "insert_p50_ns": st.column_config.NumberColumn("Insert p50 (ns)", format="%.0f"),
                 "peak_memory_kb": st.column_config.NumberColumn("Peak Mem (KB)", format="%.1f"),
@@ -221,18 +227,25 @@ def render_experimental_results():
         # Primary hypothesis tests summary
         st.markdown("#### Primary Hypothesis Test Results (30 Formulated Tests)")
         st.dataframe(
-            df_tests[["test_id", "stratum", "metric", "comparison", "n_pairs", "statistic", "p_value_raw", "p_value_holm", "significant_raw", "significant_holm"]],
+            df_tests[[
+                "family", "baseline_family", "n_pairs", "metric_diff",
+                "median_svc", "median_baseline", "median_diff", "mean_diff",
+                "wilcoxon_stat", "raw_p_value", "adjusted_p_value_holm", "rank_biserial_r", "sig_alpha_05"
+            ]],
             column_config={
-                "test_id": "Test ID",
-                "stratum": "Stratum",
-                "metric": "Metric",
-                "comparison": "Comparison",
-                "n_pairs": "N",
-                "statistic": st.column_config.NumberColumn("Statistic (W)", format="%.1f"),
-                "p_value_raw": st.column_config.NumberColumn("Raw p", format="%.5f"),
-                "p_value_holm": st.column_config.NumberColumn("Holm-adj p", format="%.5f"),
-                "significant_raw": "Sig (Raw)",
-                "significant_holm": "Sig (Holm)"
+                "family": "Hypothesis Family",
+                "baseline_family": "Baseline",
+                "n_pairs": "N (Pairs)",
+                "metric_diff": "Metric",
+                "median_svc": st.column_config.NumberColumn("Median SVC", format="%.0f"),
+                "median_baseline": st.column_config.NumberColumn("Median Base", format="%.0f"),
+                "median_diff": st.column_config.NumberColumn("Median Diff", format="%+.0f"),
+                "mean_diff": st.column_config.NumberColumn("Mean Diff", format="%+.0f"),
+                "wilcoxon_stat": st.column_config.NumberColumn("Statistic (W)", format="%.1f"),
+                "raw_p_value": st.column_config.NumberColumn("Raw p", format="%.5f"),
+                "adjusted_p_value_holm": st.column_config.NumberColumn("Holm-adj p", format="%.5f"),
+                "rank_biserial_r": st.column_config.NumberColumn("Rank-Biserial r", format="%+.2f"),
+                "sig_alpha_05": "Sig (α=0.05)"
             },
             use_container_width=True,
             hide_index=True
@@ -257,10 +270,19 @@ def render_experimental_results():
         fig_comp = px.bar(
             df_comp,
             x="trace_name",
-            y=["realized_lookup_pct", "realized_insert_pct", "realized_scope_enter_pct", "realized_scope_exit_pct"],
+            y=["pct_reference", "pct_declaration", "pct_scope_ops"],
             title="Realized Operation Breakdown Across 38 Traces",
             barmode="stack",
-            color_discrete_sequence=["#2563eb", "#f97316", "#059669", "#7c3aed"]
+            labels={
+                "value": "Percentage of Operations (%)",
+                "variable": "Operation Type",
+                "trace_name": "Workload Trace"
+            },
+            color_discrete_map={
+                "pct_reference": "#2563eb",
+                "pct_declaration": "#f97316",
+                "pct_scope_ops": "#059669"
+            }
         )
         fig_comp.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(l=40, r=40, t=40, b=40))
         st.plotly_chart(fig_comp, use_container_width=True)
