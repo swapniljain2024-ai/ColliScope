@@ -45,18 +45,26 @@ The dashboard follows a read-only architecture that consumes locked Phase 8 and 
 
 ---
 
-## Dashboard Pages
+## Dashboard Navigation (5 Streamlined Sections)
 
-1. **1. Overview:** High-level landing page with KPI cards (38 traces, 36 synthetic, 2 cJSON, 4 algorithm families, 1,520 measured trials), core research questions (RQ1, RQ2), and key verified empirical findings.
-2. **2. Dataset Explorer:** Multi-dimensional filterable table and distribution histograms for all 38 authoritative workload traces and their provenance.
-3. **3. Workload Explorer:** Analysis of nominal mix labels versus realized operation compositions, highlighting the Phase 7 finding regarding Zipfian reference skew (87% references in nominal declaration-heavy frequency-matched traces).
-4. **4. Algorithm Comparison:** Interactive multi-metric evaluation (throughput, latencies $p_{50}/p_{95}/p_{99}$, peak memory, load factor) across algorithms with box plots and condition bar charts.
-5. **5. SVC-Hash Analysis:** Head-to-head speedup comparisons, statistical significance tags, 95% bootstrap confidence intervals, and internal table diagnostics (relocation kicks, rebuilds, stash).
-6. **6. Scope Analysis:** Direct contrast between flat single-table lookups and nested lexical scoping, illustrating the 61%–64% throughput degradation of multi-table baseline wrappers.
-7. **7. Statistical Evidence:** Complete hypothesis testing table with Wilcoxon test statistics, raw $p$-values, Holm-adjusted $p$-values, and forest plots with 95% bootstrap CIs.
-8. **8. Real-Source Case Study:** Dedicated descriptive analysis of cJSON v1.7.18 (flat global scope vs authentic Clang AST lexical block scopes).
-9. **9. Trace / Operation Explorer:** Single-trace drill-down tool displaying command donut charts, symbol metrics, and per-trace algorithm execution outcomes.
-10. **10. Methodology / About:** Complete technical documentation covering experimental unit definition ($N=36$ workload units), timer resolution (Windows QPC 10 MHz), and threats to validity.
+The redesigned dashboard consolidates all empirical findings into 5 clean, focused sections optimized for faculty demonstrations:
+
+1. **1. Overview:** High-level landing page with 5 KPI cards (38 traces, 12 synthetic conditions, 4 algorithm families, 1,520 measured trials, +70.8% nested speedup), cross-condition median throughput chart, 3 concise takeaways, and quick-launch CTA to the Interactive Lab.
+2. **2. Interactive Symbol Table Lab:** Interactive live symbol table demonstrating lexical scope virtualization, dynamic variable shadowing, step-by-step execution, bucket slot visualizer, and native C++ engine verification.
+3. **3. Algorithm Comparison:** Performance evaluation across throughput, latencies ($p_{50}/p_{95}$), and peak memory with distribution box plots, summary tables, dedicated SVC-Hash head-to-head cards, and expandable trial details.
+4. **4. Scope & SVC-Hash:** Visual architecture comparison (multi-table wrappers vs SVC-Hash unified bucketed array), flat vs nested throughput degradation chart, and authentic cJSON AST inversion analysis.
+5. **5. Experimental Results & Provenance:** Publication-grade empirical evidence arranged in 5 compact tabs (Key Results & Effect Sizes, Real-Source Case Study, Statistical Evidence, Workload Matrix, and Methodology & Threats to Validity) with expandable technical notes and CSV export options.
+
+---
+
+## Design System & Theme
+
+The dashboard uses a soft, clean, professional light theme:
+- **Main Background:** `#F5F7FB` (soft cool white)
+- **Sidebar:** `#EAF0F8` (pale blue-grey)
+- **Cards & Panels:** `#FFFFFF` with `#E1E7F0` borders
+- **Typography:** `#263247` (main text), `#68758A` (secondary text)
+- **Algorithm Palette:** Chaining (`#4F6BED`), Cuckoo (`#E8A34A`), Hopscotch (`#8B79D9`), SVC-Hash (`#39A985`)
 
 ---
 

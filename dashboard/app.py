@@ -1,7 +1,6 @@
 """
 ColliScope Research Dashboard — Main Application Entry Point
-Workload-Aware Evaluation and Scope-Aware Cuckoo Hashing for Compiler Symbol Tables
-Redesigned 5-Section Architecture for Faculty Demonstration & Research Exploration.
+Clean, light, modern analytics interface designed for university faculty demonstration.
 """
 
 import sys
@@ -23,120 +22,193 @@ from dashboard.views.experimental_results import render_experimental_results
 
 def main():
     st.set_page_config(
-        page_title="ColliScope Research Dashboard",
+        page_title="ColliScope — Compiler Symbol Table Research",
         page_icon="🔬",
         layout="wide",
         initial_sidebar_state="expanded"
     )
 
-    # Scientific Computing Research Aesthetic (Theme-Adaptive)
+    # Clean, Light, Professional Research Analytics Theme
     st.markdown("""
     <style>
-        /* Base typography & layout adjustments */
-        .main .block-container {
-            padding-top: 1.5rem;
-            padding-bottom: 3rem;
-            max-width: 1300px;
+        /* Base typography & page canvas */
+        .stApp {
+            background-color: #F5F7FB;
+            color: #263247;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
-        /* Metric card styling — theme adaptive */
+        .main .block-container {
+            padding-top: 1.25rem;
+            padding-bottom: 2.5rem;
+            max-width: 1260px;
+        }
+
+        /* Headings & Text */
+        h1, h2, h3, h4, h5, h6 {
+            color: #263247 !important;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+        p, span, label {
+            color: #263247;
+        }
+        .stCaption, caption, .caption-text {
+            color: #68758A !important;
+            font-size: 13px !important;
+        }
+
+        /* Metric card styling — Crisp White on Cool Canvas */
         div[data-testid="stMetric"] {
-            background-color: var(--secondary-background-color);
-            border: 1px solid rgba(128, 128, 128, 0.2);
-            padding: 12px 16px;
+            background-color: #FFFFFF;
+            border: 1px solid #E1E7F0;
+            padding: 14px 18px;
             border-radius: 8px;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 3px rgba(38, 50, 71, 0.04);
         }
         div[data-testid="stMetricLabel"] {
-            font-size: 13px !important;
+            font-size: 12.5px !important;
             font-weight: 600 !important;
-            color: var(--text-color) !important;
-            opacity: 0.8;
+            color: #68758A !important;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
         div[data-testid="stMetricValue"] {
-            font-size: 24px !important;
+            font-size: 26px !important;
             font-weight: 700 !important;
-            color: var(--text-color) !important;
+            color: #263247 !important;
+            margin-top: 2px;
         }
 
-        /* Sidebar styling — inherit theme colors naturally */
+        /* Sidebar styling — Soft pale blue-grey */
         section[data-testid="stSidebar"] {
-            border-right: 1px solid rgba(128, 128, 128, 0.2);
+            background-color: #EAF0F8;
+            border-right: 1px solid #E1E7F0;
         }
         section[data-testid="stSidebar"] .block-container {
-            padding-top: 1.5rem;
+            padding-top: 1.25rem;
+            padding-bottom: 1.5rem;
         }
 
-        /* Sidebar radio navigation — crisp text in both light and dark modes */
+        /* Sidebar radio navigation */
         section[data-testid="stSidebar"] div[data-testid="stRadio"] label {
+            background-color: transparent;
             padding: 8px 12px;
             border-radius: 6px;
-            margin-bottom: 2px;
-            transition: background-color 0.15s ease;
+            margin-bottom: 3px;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
         }
         section[data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
-            background-color: rgba(128, 128, 128, 0.12);
+            background-color: rgba(79, 107, 237, 0.08);
+            border-color: rgba(79, 107, 237, 0.15);
         }
         section[data-testid="stSidebar"] div[data-testid="stRadio"] label p {
-            font-weight: 600 !important;
-            font-size: 14px !important;
-            color: var(--text-color) !important;
+            font-weight: 500 !important;
+            font-size: 13.5px !important;
+            color: #263247 !important;
+        }
+
+        /* Primary Button */
+        div.stButton > button {
+            background-color: #4F6BED;
+            color: #FFFFFF;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            transition: background-color 0.15s ease;
+        }
+        div.stButton > button:hover {
+            background-color: #3E56D0;
+            color: #FFFFFF;
+            border: none;
+        }
+
+        /* Reusable Card Components */
+        .research-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E1E7F0;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 3px rgba(38, 50, 71, 0.03);
+            color: #263247;
+        }
+        .research-callout {
+            background-color: #FFFFFF;
+            border: 1px solid #E1E7F0;
+            border-left: 4px solid #4F6BED;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 18px;
+            margin: 10px 0 14px 0;
+            color: #263247;
+        }
+        .research-callout-success {
+            background-color: #FFFFFF;
+            border: 1px solid #E1E7F0;
+            border-left: 4px solid #39A985;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 18px;
+            margin: 10px 0 14px 0;
+            color: #263247;
+        }
+        .research-callout-warning {
+            background-color: #FFFFFF;
+            border: 1px solid #E1E7F0;
+            border-left: 4px solid #E6B65C;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 18px;
+            margin: 10px 0 14px 0;
+            color: #263247;
         }
 
         /* Table header enhancements */
         thead tr th {
-            font-weight: 700 !important;
-            background-color: var(--secondary-background-color) !important;
-            color: var(--text-color) !important;
-            border-bottom: 2px solid rgba(128, 128, 128, 0.2) !important;
+            font-weight: 600 !important;
+            background-color: #EAF0F8 !important;
+            color: #263247 !important;
+            border-bottom: 1px solid #E1E7F0 !important;
+            font-size: 13px !important;
+        }
+        div[data-testid="stDataFrame"] {
+            border: 1px solid #E1E7F0;
+            border-radius: 6px;
+            background-color: #FFFFFF;
         }
 
-        /* Reusable research UI cards */
-        .research-card {
-            background-color: var(--secondary-background-color);
-            border: 1px solid rgba(128, 128, 128, 0.2);
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-        .research-callout {
-            background-color: rgba(59, 130, 246, 0.08);
-            border-left: 4px solid #3b82f6;
-            border-radius: 0 8px 8px 0;
-            padding: 14px 18px;
-            margin: 14px 0;
-            color: var(--text-color);
-        }
-        .research-callout-warning {
-            background-color: rgba(245, 158, 11, 0.08);
-            border-left: 4px solid #f59e0b;
-            border-radius: 0 8px 8px 0;
-            padding: 14px 18px;
-            margin: 14px 0;
-            color: var(--text-color);
+        /* Expanders styling */
+        div[data-testid="stExpander"] {
+            border: 1px solid #E1E7F0 !important;
+            border-radius: 8px !important;
+            background-color: #FFFFFF !important;
+            margin-bottom: 10px !important;
         }
     </style>
     """, unsafe_allow_html=True)
 
     # Sidebar Header & Branding
     st.sidebar.markdown("""
-    <div style="padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid rgba(128,128,128,0.2);">
-        <h2 style="margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -0.02em;">🔬 ColliScope</h2>
-        <span style="font-size: 12px; opacity: 0.75; font-weight: 500;">Compiler Symbol Table Research</span>
+    <div style="padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid #E1E7F0;">
+        <div style="font-size: 19px; font-weight: 800; color: #263247; letter-spacing: -0.02em;">
+            🔬 ColliScope
+        </div>
+        <div style="font-size: 12px; color: #68758A; font-weight: 500; margin-top: 1px;">
+            Compiler Symbol Table Research
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Streamlined 5-Section Navigation
+    # 5 Streamlined Navigation Sections
     nav_options = [
         "1. Overview",
         "2. Interactive Symbol Table Lab",
         "3. Algorithm Comparison",
         "4. Scope & SVC-Hash",
-        "5. Experimental Results"
+        "5. Experimental Results & Provenance"
     ]
 
-    # Synchronize session state navigation
+    # Handle intra-page CTA routing seamlessly
     if "nav_selection" not in st.session_state:
         st.session_state["nav_selection"] = nav_options[0]
     elif st.session_state["nav_selection"] not in nav_options:
@@ -157,18 +229,15 @@ def main():
     )
     st.session_state["nav_selection"] = selected_page
 
-    # Minimal secondary information in sidebar
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("ℹ️ Experiment Specs & Provenance", expanded=False):
-        st.markdown("""
-        <div style="font-size: 11.5px; opacity: 0.85; line-height: 1.6;">
-            <strong>Authoritative Traces:</strong> 38 (36 Synthetic + 2 cJSON)<br>
-            <strong>Algorithm Families:</strong> 4 (Chaining, Cuckoo, Hopscotch, SVC)<br>
-            <strong>Total Executions:</strong> 1,976 (1,520 Measured + 456 Warmups)<br>
-            <strong>Hardware Timer:</strong> Windows QPC (10.0 MHz Monotonic)<br>
-            <strong>Compiler:</strong> MinGW GCC 8.1.0 (-O3 -std=c++17)
-        </div>
-        """, unsafe_allow_html=True)
+    # Compact Status Indicator (no clutter)
+    st.sidebar.markdown("<br>", unsafe_allow_html=True)
+    st.sidebar.markdown("""
+    <div style="padding: 8px 12px; border-radius: 6px; background-color: #FFFFFF; border: 1px solid #E1E7F0; text-align: center;">
+        <span style="font-size: 11.5px; font-weight: 600; color: #68758A;">
+            38 Traces · 4 Algorithms · 1,520 Trials
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Route to selected 5 sections
     if selected_page == "1. Overview":
@@ -179,7 +248,7 @@ def main():
         render_algorithm_comparison()
     elif selected_page == "4. Scope & SVC-Hash":
         render_scope_and_svc()
-    elif selected_page == "5. Experimental Results":
+    elif selected_page == "5. Experimental Results & Provenance":
         render_experimental_results()
 
 

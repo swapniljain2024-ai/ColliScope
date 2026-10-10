@@ -1,9 +1,8 @@
 """
-ColliScope Dashboard: Page 11 - Interactive Symbol Table Lab
-Live demonstration interface for Compiler Design students, researchers, and faculty.
-Supports interactive operations (ENTER_SCOPE, EXIT_SCOPE, DECLARE, LOOKUP),
-live lexical scope trees, bucket/slot state inspection, cuckoo kick chains,
-and real C++ engine verification.
+ColliScope Dashboard: Section 2 — Interactive Symbol Table Lab
+Clean, modern, light-themed demonstration interface for university faculty.
+Provides live interactive operations (DECLARE, LOOKUP, ENTER_SCOPE, EXIT_SCOPE),
+scope hierarchy trees, bucket/slot state inspection, cuckoo kicks, and native C++ engine verification.
 """
 
 import streamlit as st
@@ -18,7 +17,6 @@ from dashboard.symbol_table_engine import (
     SymbolValue,
     execute_trace_in_cpp_engine
 )
-
 
 # Prebuilt Demonstration Scenarios for Compiler Design
 PREBUILT_SCENARIOS = {
@@ -105,40 +103,37 @@ def reset_lab():
 def render_interactive_lab():
     init_lab_session()
 
+    # Header & One-Line Intro
     st.markdown("""
-    <div class="research-card" style="border-left: 5px solid #3b82f6; margin-bottom: 14px;">
-        <h2 style="margin: 0 0 6px 0;">🧪 Interactive Symbol Table Lab</h2>
-        <p style="margin: 0; font-size: 14.5px; opacity: 0.9;">
-            <strong>Live Compiler Demonstration:</strong> Execute compiler symbol-table operations 
-            (<code>ENTER_SCOPE</code>, <code>EXIT_SCOPE</code>, <code>DECLARE</code>, <code>LOOKUP</code>) 
-            and interactively inspect lexical scope trees, bucket slot occupancy, cuckoo kick chains, 
-            shadowing resolution, and native C++ engine execution.
+    <div style="margin-bottom: 16px;">
+        <h2 style="margin: 0 0 4px 0; font-size: 24px; font-weight: 800; color: #263247;">
+            🧪 Interactive Symbol Table Lab
+        </h2>
+        <p style="margin: 0; font-size: 14.5px; color: #68758A;">
+            Step through compiler symbol table operations and observe lexical scope hierarchies, slot migrations, and cuckoo kicks in real time.
         </p>
-    </div>
-    <div class="research-callout" style="padding: 8px 14px; margin: 0 0 18px 0; font-size: 12.5px;">
-        <strong>Architecture Distinction:</strong> The Python interactive simulator is an educational model designed for visualization of scope trees, slot migrations, and kick displacement chains. The compiled native C++ binary (<code>colliscope_bench.exe</code>) is the authoritative benchmark engine.
     </div>
     """, unsafe_allow_html=True)
 
-    # Top Bar: Algorithm & Scenario Controls
+    # Top Control Bar: Algorithm Architecture & Scenario Selection
     top_col1, top_col2 = st.columns([1, 1])
 
     with top_col1:
         algo_choice = st.selectbox(
-            "Symbol Table Algorithm Architecture:",
+            "Symbol Table Architecture:",
             options=[
-                "SVC-Hash (Scope-Versioned Cuckoo Hash) [PROPOSED]",
+                "SVC-Hash (Scope-Virtualized Cuckoo Table) [PROPOSED]",
                 "Separate Chaining [BASELINE]",
                 "Plain Cuckoo Hashing [BASELINE]",
                 "Hopscotch Hashing [BASELINE]"
             ],
             index=0,
-            help="Choose between the proposed scope-virtualized cuckoo scheme and classic collision-resolution baselines."
+            help="Switch between the proposed scope-virtualized cuckoo scheme and classical baseline algorithms."
         )
 
     with top_col2:
         selected_scenario = st.selectbox(
-            "Prebuilt Educational Demonstration Scenario:",
+            "Demonstration Scenario:",
             options=list(PREBUILT_SCENARIOS.keys()),
             index=2,
             help="Select a curated sequence of compiler operations demonstrating symbol-table phenomena."
@@ -147,22 +142,20 @@ def render_interactive_lab():
             st.session_state["scenario_name"] = selected_scenario
             st.session_state["scenario_step_idx"] = 0
 
-    st.markdown("---")
-
-    # Scenario Step Player Controls
+    # Step Player Controls
     scenario_steps = PREBUILT_SCENARIOS[st.session_state["scenario_name"]]
     curr_step_idx = st.session_state["scenario_step_idx"]
     total_steps = len(scenario_steps)
 
-    play_col1, play_col2, play_col3, play_col4 = st.columns([2, 1, 1, 1])
+    play_col1, play_col2, play_col3, play_col4 = st.columns([2.5, 1, 1, 1])
 
     with play_col1:
-        st.markdown(f"**Scenario Progress:** Step {curr_step_idx} of {total_steps}")
+        st.markdown(f"**Progress:** Step {curr_step_idx} of {total_steps}")
         if curr_step_idx < total_steps:
             next_op, next_arg, next_type, next_desc = scenario_steps[curr_step_idx]
-            st.caption(f"**Next Step:** `{next_op} {next_arg or ''}` — *{next_desc}*")
+            st.caption(f"**Next:** `{next_op} {next_arg or ''}` — *{next_desc}*")
         else:
-            st.caption("✅ **Scenario Completed!** Click *Reset* or choose another scenario.")
+            st.caption("✅ **Scenario complete.** Reset to repeat or test custom operations.")
 
     with play_col2:
         if st.button("▶ Step Forward", disabled=(curr_step_idx >= total_steps), use_container_width=True):
@@ -186,15 +179,113 @@ def render_interactive_lab():
 
     st.markdown("---")
 
-    # Manual Operation Controls
-    with st.expander("🛠️ Manual Operation Console (Execute Custom Operations)", expanded=False):
-        m_col1, m_col2, m_col3, m_col4 = st.columns([2, 1.5, 1.5, 1])
+    # Main Visual Layout: Left = Scope Hierarchy & Inspector, Right = Live Table State
+    sim: SvcHashTableSimulator = st.session_state["lab_sim"]
+    v_col1, v_col2 = st.columns([1, 2])
+
+    with v_col1:
+        st.markdown("#### 🌲 Lexical Scope Hierarchy")
+        st.caption(f"Active Scopes: **{sum(1 for s in sim.scope_registry.values() if s.active)}** | Current: **Scope {sim.current_scope_id}**")
+
+        # Visual Scope Tree
+        scope_tree_html = render_scope_tree_html(sim)
+        st.markdown(scope_tree_html, unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Last Operation Inspector
+        last_res = st.session_state.get("lab_last_result")
+        if last_res:
+            st.markdown("#### 🔍 Last Operation Outcome")
+            render_last_operation_inspector(last_res)
+
+    with v_col2:
+        st.markdown("#### 📊 Live Symbol Table State")
+
+        if "SVC-Hash" in algo_choice:
+            st.caption(
+                f"Buckets: **{sim.num_buckets}** (4 slots/bucket) | "
+                f"Active Symbols: **{sim.occupied_count - sim.tombstone_count}** | "
+                f"Tombstones: **{sim.tombstone_count}** | "
+                f"Stash: **{sim.stash_count}** | "
+                f"Relocation Kicks: **{sim.kick_count}**"
+            )
+            render_svc_table_view(sim)
+        elif "Separate Chaining" in algo_choice:
+            chain_sim: ChainingTableSimulator = st.session_state["lab_chaining"]
+            st.caption(
+                f"Buckets: **{chain_sim.num_buckets}** | "
+                f"Total Elements: **{chain_sim.total_elements}** | "
+                f"Collisions: **{chain_sim.collision_count}**"
+            )
+            render_chaining_table_view(chain_sim)
+        elif "Plain Cuckoo" in algo_choice:
+            cuckoo_sim: PlainCuckooTableSimulator = st.session_state["lab_cuckoo"]
+            st.caption(
+                f"Slots: **{cuckoo_sim.capacity}** | "
+                f"Elements: **{cuckoo_sim.total_elements}** | "
+                f"Kicks: **{cuckoo_sim.kick_count}** | "
+                f"Rehashes: **{cuckoo_sim.rehash_count}**"
+            )
+            render_cuckoo_table_view(cuckoo_sim)
+        elif "Hopscotch" in algo_choice:
+            hop_sim: HopscotchTableSimulator = st.session_state["lab_hopscotch"]
+            st.caption(
+                f"Slots: **{hop_sim.capacity}** | "
+                f"Elements: **{hop_sim.total_elements}** | "
+                f"Shifts: **{hop_sim.neighbourhood_movements}**"
+            )
+            render_hopscotch_table_view(hop_sim)
+
+    st.markdown("---")
+
+    # Bottom Area: Chronological Operation Log & C++ Engine Verification
+    log_col1, log_col2 = st.columns([1.6, 1])
+
+    with log_col1:
+        st.markdown("#### 📜 Operation History")
+        log_entries = st.session_state.get("lab_log", [])
+        if log_entries:
+            df_log = pd.DataFrame(log_entries)
+            st.dataframe(
+                df_log[["Step", "Operation", "Target", "Scope", "Status", "Details"]],
+                use_container_width=True,
+                height=220
+            )
+        else:
+            st.info("No operations executed yet. Click **▶ Step Forward** above.")
+
+    with log_col2:
+        st.markdown("#### ⚙️ Native C++ Engine Verification")
+        st.caption("Execute this session's generated trace in the compiled `colliscope_bench.exe` binary.")
+
+        trace_text = generate_session_trace(st.session_state.get("lab_log", []))
+
+        with st.expander("View Emitted Trace Syntax", expanded=False):
+            st.code(trace_text or "# Empty trace\n", language="text")
+
+        if st.button("🚀 Verify in Native C++ Engine", use_container_width=True, disabled=not log_entries):
+            with st.spinner("Invoking native C++ benchmark binary..."):
+                res = execute_trace_in_cpp_engine(trace_text)
+                if res.get("available"):
+                    if res.get("returncode") == 0:
+                        st.success("✅ Native C++ benchmark verified successfully.")
+                        st.code(res.get("stdout", ""), language="text")
+                    else:
+                        st.error(f"Execution returned code {res.get('returncode')}")
+                        st.code(res.get("stderr", "") or res.get("stdout", ""))
+                else:
+                    st.warning(f"⚠️ {res.get('error')}. The educational simulator functions independently.")
+
+    # Advanced Manual Operation Console (in expander)
+    with st.expander("🛠️ Advanced: Execute Custom Manual Operations", expanded=False):
+        m_col1, m_col2, m_col3, m_col4 = st.columns([1.5, 2, 1.5, 1])
         with m_col1:
             m_op = st.selectbox("Operation:", ["DECLARE", "LOOKUP", "ENTER_SCOPE", "EXIT_SCOPE"])
         with m_col2:
-            m_id = st.text_input("Identifier / Scope Name:", value="var_x", help="Identifier string to declare or lookup.")
+            m_id = st.text_input("Identifier / Name:", value="var_x")
         with m_col3:
-            m_type_name = st.selectbox("Type (for DECLARE):", ["INT", "FLOAT", "STRING", "BOOL", "PTR"])
+            m_type_name = st.selectbox("Type:", ["INT", "FLOAT", "STRING", "BOOL", "PTR"])
             type_map = {"INT": 1, "FLOAT": 2, "STRING": 3, "BOOL": 4, "PTR": 5}
         with m_col4:
             st.write("")
@@ -209,98 +300,6 @@ def render_interactive_lab():
                 elif m_op == "LOOKUP":
                     execute_lab_op("LOOKUP", m_id, None, f"Looked up '{m_id}'")
                 st.rerun()
-
-    # Main Visual Layout: Left = Scope Tree & Details, Right = Table State
-    sim: SvcHashTableSimulator = st.session_state["lab_sim"]
-    v_col1, v_col2 = st.columns([1, 2])
-
-    with v_col1:
-        st.subheader("🌲 Lexical Scope Hierarchy")
-        st.caption(f"**Current Scope:** `Scope {sim.current_scope_id}` | **Active Scopes:** `{sum(1 for s in sim.scope_registry.values() if s.active)}`")
-
-        # Visual Scope Tree
-        scope_tree_html = render_scope_tree_html(sim)
-        st.markdown(scope_tree_html, unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # Last Operation Inspector
-        last_res = st.session_state.get("lab_last_result")
-        if last_res:
-            st.subheader("🔍 Last Operation Inspector")
-            render_last_operation_inspector(last_res)
-
-    with v_col2:
-        st.subheader("📊 Live Symbol Table State")
-
-        if "SVC-Hash" in algo_choice:
-            st.caption(
-                f"**Architecture:** Virtualized Multi-Scope Cuckoo Table | **Buckets:** `{sim.num_buckets}` (4 slots/bucket) | "
-                f"**Active Elements:** `{sim.occupied_count - sim.tombstone_count}` | **Tombstones:** `{sim.tombstone_count}` | "
-                f"**Stash Entries:** `{sim.stash_count}` | **Relocation Kicks:** `{sim.kick_count}`"
-            )
-            render_svc_table_view(sim)
-        elif "Separate Chaining" in algo_choice:
-            chain_sim: ChainingTableSimulator = st.session_state["lab_chaining"]
-            st.caption(
-                f"**Architecture:** Separate Chaining Baseline | **Buckets:** `{chain_sim.num_buckets}` | "
-                f"**Elements:** `{chain_sim.total_elements}` | **Collisions:** `{chain_sim.collision_count}`"
-            )
-            render_chaining_table_view(chain_sim)
-        elif "Plain Cuckoo" in algo_choice:
-            cuckoo_sim: PlainCuckooTableSimulator = st.session_state["lab_cuckoo"]
-            st.caption(
-                f"**Architecture:** Plain Cuckoo Hashing (Key-Only Hashing) | **Slots:** `{cuckoo_sim.capacity}` | "
-                f"**Elements:** `{cuckoo_sim.total_elements}` | **Kicks:** `{cuckoo_sim.kick_count}` | **Rehashes:** `{cuckoo_sim.rehash_count}`"
-            )
-            render_cuckoo_table_view(cuckoo_sim)
-        elif "Hopscotch" in algo_choice:
-            hop_sim: HopscotchTableSimulator = st.session_state["lab_hopscotch"]
-            st.caption(
-                f"**Architecture:** Hopscotch Hashing (Neighborhood H=32) | **Slots:** `{hop_sim.capacity}` | "
-                f"**Elements:** `{hop_sim.total_elements}` | **Neighborhood Shifts:** `{hop_sim.neighbourhood_movements}`"
-            )
-            render_hopscotch_table_view(hop_sim)
-
-    st.markdown("---")
-
-    # Bottom Area: Operation Chronological Log & C++ Execution
-    log_col1, log_col2 = st.columns([1.6, 1])
-
-    with log_col1:
-        st.subheader("📜 Chronological Operation Log")
-        log_entries = st.session_state.get("lab_log", [])
-        if log_entries:
-            df_log = pd.DataFrame(log_entries)
-            st.dataframe(
-                df_log[["Step", "Operation", "Target", "Scope", "Status", "Details"]],
-                use_container_width=True,
-                height=260
-            )
-        else:
-            st.info("No operations executed yet. Click **▶ Step Forward** or execute a manual operation.")
-
-    with log_col2:
-        st.subheader("⚙️ Real C++ Engine Verification")
-        st.caption("Verify this session against the compiled native C++ `colliscope_bench` binary.")
-
-        trace_text = generate_session_trace(st.session_state.get("lab_log", []))
-
-        with st.expander("Generated Trace File (`.trace`)", expanded=False):
-            st.code(trace_text or "# Empty trace\n", language="text")
-
-        if st.button("🚀 Verify in Native C++ Engine", use_container_width=True, disabled=not log_entries):
-            with st.spinner("Invoking compiled native C++ benchmark binary..."):
-                res = execute_trace_in_cpp_engine(trace_text)
-                if res.get("available"):
-                    if res.get("returncode") == 0:
-                        st.success("✅ **Native C++ Execution Succeeded!**")
-                        st.code(res.get("stdout", ""), language="text")
-                    else:
-                        st.error(f"Execution returned error code {res.get('returncode')}")
-                        st.code(res.get("stderr", "") or res.get("stdout", ""))
-                else:
-                    st.warning(f"⚠️ Native C++ binary unavailable: {res.get('error')}. The educational simulator continues functioning independently.")
 
 
 def execute_lab_op(op: str, identifier: Optional[str], type_id: Optional[int], desc: str):
@@ -353,7 +352,7 @@ def execute_lab_op(op: str, identifier: Optional[str], type_id: Optional[int], d
 
 
 def render_scope_tree_html(sim: SvcHashTableSimulator) -> str:
-    """Generates accessible HTML visualizing active and inactive lexical scopes."""
+    """Renders light, clean HTML tree visualizing active and exited lexical scopes."""
     items = []
     for s_id, sc in sim.scope_registry.items():
         is_current = (s_id == sim.current_scope_id)
@@ -368,21 +367,21 @@ def render_scope_tree_html(sim: SvcHashTableSimulator) -> str:
             curr = p
 
         indent = "&nbsp;&nbsp;&nbsp;&nbsp;" * depth
-        border_style = "border-left: 4px solid #3b82f6; padding-left: 8px;" if is_current else ""
-        opacity = "1.0" if sc.active else "0.5"
+        border_style = "border-left: 3px solid #4F6BED; padding-left: 8px; background-color: rgba(79, 107, 237, 0.05);" if is_current else "padding-left: 8px;"
+        opacity = "1.0" if sc.active else "0.55"
 
         items.append(
-            f"<div style='margin-bottom: 6px; font-size: 13.5px; opacity: {opacity}; {border_style}'>"
+            f"<div style='margin-bottom: 5px; font-size: 13px; opacity: {opacity}; border-radius: 4px; {border_style}'>"
             f"{indent}<strong>Scope {s_id}</strong>: {sc.name} "
-            f"<span style='font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(128,128,128,0.2);'>{status_badge}</span>"
+            f"<span style='font-size: 11px; padding: 1px 6px; border-radius: 4px; background: #EAF0F8; color: #263247; font-weight: 600;'>{status_badge}</span>"
             f"</div>"
         )
 
-    return f"<div class='research-card' style='padding: 12px;'>{''.join(items)}</div>"
+    return f"<div class='research-card' style='padding: 12px; margin-bottom: 0;'>{''.join(items)}</div>"
 
 
 def render_svc_table_view(sim: SvcHashTableSimulator):
-    """Renders the virtualized bucket array and stash of SVC-Hash."""
+    """Renders light, modern bucket array and stash of SVC-Hash."""
     tab1, tab2 = st.tabs(["Candidate Buckets (Slots 0..3)", "Overflow Stash (8 Slots)"])
 
     with tab1:
@@ -395,22 +394,22 @@ def render_svc_table_view(sim: SvcHashTableSimulator):
                 for s_idx, slot in enumerate(bucket):
                     if not slot.occupied:
                         st.markdown(
-                            f"<div style='border: 1px dashed rgba(128,128,128,0.3); border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; font-size: 11.5px; opacity: 0.6;'>"
+                            f"<div style='border: 1px dashed #E1E7F0; border-radius: 5px; padding: 5px 8px; margin-bottom: 4px; font-size: 11.5px; color: #68758A; background: #FFFFFF;'>"
                             f"Slot {s_idx}: <em>Empty</em></div>",
                             unsafe_allow_html=True
                         )
                     elif slot.tombstoned:
                         st.markdown(
-                            f"<div style='border: 1px solid rgba(239,68,68,0.4); background: rgba(239,68,68,0.1); border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; font-size: 11.5px;'>"
-                            f"Slot {s_idx}: <del><strong>{slot.key}</strong> @ Scope {slot.scope_id}</del> <span style='font-size: 10px; color: #ef4444;'>(Tombstone)</span></div>",
+                            f"<div style='border: 1px solid #DC6B75; background: rgba(220, 107, 117, 0.08); border-radius: 5px; padding: 5px 8px; margin-bottom: 4px; font-size: 11.5px; color: #DC6B75;'>"
+                            f"Slot {s_idx}: <del><strong>{slot.key}</strong> @ S{slot.scope_id}</del> <span style='font-size: 10px;'>(Tombstone)</span></div>",
                             unsafe_allow_html=True
                         )
                     else:
                         b1, b2 = sim.compute_candidate_buckets(slot.key, slot.scope_id)
                         st.markdown(
-                            f"<div style='border: 1px solid rgba(34,197,94,0.4); background: rgba(34,197,94,0.1); border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; font-size: 11.5px;'>"
+                            f"<div style='border: 1px solid #39A985; background: rgba(57, 169, 133, 0.08); border-radius: 5px; padding: 5px 8px; margin-bottom: 4px; font-size: 11.5px; color: #263247;'>"
                             f"Slot {s_idx}: <strong>{slot.key}</strong> @ S{slot.scope_id} ({slot.value.type_name()})<br>"
-                            f"<span style='font-size: 10px; opacity: 0.8;'>Candidates: [{b1}, {b2}]</span></div>",
+                            f"<span style='font-size: 10px; color: #68758A;'>Candidates: [{b1}, {b2}]</span></div>",
                             unsafe_allow_html=True
                         )
 
@@ -421,11 +420,11 @@ def render_svc_table_view(sim: SvcHashTableSimulator):
             sc = s_cols[i % 4]
             with sc:
                 if not slot.occupied:
-                    st.markdown(f"<div style='border: 1px dashed rgba(128,128,128,0.3); padding: 6px; font-size: 11.5px;'>Stash [{i}]: <em>Empty</em></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='border: 1px dashed #E1E7F0; padding: 6px; font-size: 11.5px; color: #68758A; background: #FFFFFF;'>Stash [{i}]: <em>Empty</em></div>", unsafe_allow_html=True)
                 elif slot.tombstoned:
-                    st.markdown(f"<div style='border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); padding: 6px; font-size: 11.5px;'><del>{slot.key} @ S{slot.scope_id}</del></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='border: 1px solid #DC6B75; background: rgba(220, 107, 117, 0.08); padding: 6px; font-size: 11.5px; color: #DC6B75;'><del>{slot.key} @ S{slot.scope_id}</del></div>", unsafe_allow_html=True)
                 else:
-                    st.markdown(f"<div style='border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); padding: 6px; font-size: 11.5px;'><strong>{slot.key}</strong> @ S{slot.scope_id}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='border: 1px solid #39A985; background: rgba(57, 169, 133, 0.08); padding: 6px; font-size: 11.5px; color: #263247;'><strong>{slot.key}</strong> @ S{slot.scope_id}</div>", unsafe_allow_html=True)
 
 
 def render_chaining_table_view(sim: ChainingTableSimulator):
@@ -436,11 +435,11 @@ def render_chaining_table_view(sim: ChainingTableSimulator):
             st.markdown(f"**Bucket {b_idx}**")
             chain = sim.buckets[b_idx]
             if not chain:
-                st.markdown("<div style='font-size: 11.5px; opacity: 0.5;'>[ Empty List ]</div>", unsafe_allow_html=True)
+                st.markdown("<div style='font-size: 11.5px; color: #68758A;'>[ Empty List ]</div>", unsafe_allow_html=True)
             else:
                 for node in chain:
                     st.markdown(
-                        f"<div style='border: 1px solid rgba(59,130,246,0.3); background: rgba(59,130,246,0.1); border-radius: 4px; padding: 4px; margin-bottom: 3px; font-size: 11.5px;'>"
+                        f"<div style='border: 1px solid #4F6BED; background: rgba(79, 107, 237, 0.08); border-radius: 5px; padding: 4px 6px; margin-bottom: 3px; font-size: 11.5px; color: #263247;'>"
                         f"• <strong>{node['key']}</strong> @ Scope {node['scope_id']} ({node['value'].type_name()})</div>",
                         unsafe_allow_html=True
                     )
@@ -452,12 +451,12 @@ def render_cuckoo_table_view(sim: PlainCuckooTableSimulator):
     for i, slot in enumerate(sim.slots):
         with cols[i % 4]:
             if slot is None:
-                st.markdown(f"<div style='border: 1px dashed rgba(128,128,128,0.3); padding: 4px; font-size: 11px;'>Slot {i}: <em>Empty</em></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='border: 1px dashed #E1E7F0; padding: 4px; font-size: 11px; color: #68758A;'>Slot {i}: <em>Empty</em></div>", unsafe_allow_html=True)
             else:
                 p1, p2 = sim.compute_positions(slot["key"])
                 st.markdown(
-                    f"<div style='border: 1px solid rgba(249,115,22,0.4); background: rgba(249,115,22,0.1); padding: 4px; font-size: 11px;'>"
-                    f"Slot {i}: <strong>{slot['key']}</strong><br><span style='font-size: 9.5px;'>Pos: [{p1}, {p2}]</span></div>",
+                    f"<div style='border: 1px solid #E8A34A; background: rgba(232, 163, 74, 0.08); padding: 4px; font-size: 11px; color: #263247;'>"
+                    f"Slot {i}: <strong>{slot['key']}</strong><br><span style='font-size: 9.5px; color: #68758A;'>Pos: [{p1}, {p2}]</span></div>",
                     unsafe_allow_html=True
                 )
 
@@ -470,17 +469,17 @@ def render_hopscotch_table_view(sim: HopscotchTableSimulator):
             mask = sim.hop_info[i]
             mask_str = f"{mask:04b}"[-4:]
             if slot is None:
-                st.markdown(f"<div style='border: 1px dashed rgba(128,128,128,0.3); padding: 4px; font-size: 11px;'>Slot {i}: <em>Empty</em><br><span style='font-size: 9px;'>Hop: {mask_str}</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='border: 1px dashed #E1E7F0; padding: 4px; font-size: 11px; color: #68758A;'>Slot {i}: <em>Empty</em><br><span style='font-size: 9px;'>Hop: {mask_str}</span></div>", unsafe_allow_html=True)
             else:
                 st.markdown(
-                    f"<div style='border: 1px solid rgba(168,85,247,0.4); background: rgba(168,85,247,0.1); padding: 4px; font-size: 11px;'>"
-                    f"Slot {i}: <strong>{slot['key']}</strong><br><span style='font-size: 9px;'>Hop: {mask_str}</span></div>",
+                    f"<div style='border: 1px solid #8B79D9; background: rgba(139, 121, 217, 0.08); padding: 4px; font-size: 11px; color: #263247;'>"
+                    f"Slot {i}: <strong>{slot['key']}</strong><br><span style='font-size: 9px; color: #68758A;'>Hop: {mask_str}</span></div>",
                     unsafe_allow_html=True
                 )
 
 
 def render_last_operation_inspector(res: Dict[str, Any]):
-    """Renders step-by-step resolution path or kick path for the last operation."""
+    """Renders clean summary card of the last operation outcome."""
     op_type = res.get("type")
 
     if op_type == "lookup":
@@ -488,28 +487,28 @@ def render_last_operation_inspector(res: Dict[str, Any]):
         if r["found"]:
             st.success(f"🎯 **HIT:** `{r['key']}` resolved in **Scope {r['resolved_scope']}** ({r['location']})")
             if r.get("is_shadowed"):
-                st.info(f"🛡️ **Shadowing Active:** Inner declaration in Scope {r['resolved_scope']} shadows any outer declarations.")
+                st.info(f"🛡️ **Shadowing Active:** Inner declaration in Scope {r['resolved_scope']} shadows outer declaration.")
         else:
             st.error(f"❌ **MISS:** `{r['key']}` not found along active scope path.")
 
-        # Step by step path
-        st.markdown("**Resolution Path:**")
+        # Clean resolution steps
+        st.markdown("<div style='font-size: 12px; font-weight: 600; color: #68758A; margin-top: 6px;'>Resolution Path:</div>", unsafe_allow_html=True)
         for step in r.get("path", []):
-            st.markdown(f"• **Scope {step['scope_id']}** (`b1={step.get('b1')}`, `b2={step.get('b2')}`) $\\rightarrow$ {'**FOUND**' if step.get('found') else 'Not present'}")
+            st.markdown(f"<span style='font-size: 12px;'>• <strong>Scope {step['scope_id']}</strong> ([{step.get('b1')}, {step.get('b2')}]) &rarr; {'<span style=\"color:#39A985; font-weight:700;\">FOUND</span>' if step.get('found') else 'Not present'}</span>", unsafe_allow_html=True)
 
     elif op_type == "declare":
         r = res["res"]
         if r["success"]:
             st.success(f"✅ **DECLARED:** `{r['key']}` in **Scope {r['scope_id']}** ({r['message']})")
             if r.get("kicks"):
-                st.markdown("**Cuckoo Relocation Kicks:**")
+                st.markdown("<div style='font-size: 12px; font-weight: 600; color: #E8A34A; margin-top: 4px;'>Relocation Kicks:</div>", unsafe_allow_html=True)
                 for k in r["kicks"]:
-                    st.markdown(f"• Victim `{k['displaced_key']}` from Bucket {k['from_bucket']}[{k['from_slot']}] relocated $\\rightarrow$ Bucket {k['to_bucket']}")
+                    st.markdown(f"<span style='font-size: 12px;'>• Displaced `{k['displaced_key']}` from Bucket {k['from_bucket']}[{k['from_slot']}] &rarr; Bucket {k['to_bucket']}</span>", unsafe_allow_html=True)
         else:
-            st.error(f"⛔ **DECLARATION FAILED:** {r['message']}")
+            st.error(f"⛔ **DECLARATION REJECTED:** {r['message']}")
 
     elif op_type == "exit_scope":
-        st.warning(f"🚪 **SCOPE EXITED:** Scope {res.get('exited_id')} closed. {res.get('tombstones')} entry/entries marked tombstoned.")
+        st.warning(f"🚪 **SCOPE EXITED:** Scope {res.get('exited_id')} closed. {res.get('tombstones')} entry/entries tombstoned.")
 
     elif op_type == "enter_scope":
         st.info(f"📥 **SCOPE ENTERED:** Scope {res.get('scope_id')} active under parent.")
@@ -518,9 +517,6 @@ def render_last_operation_inspector(res: Dict[str, Any]):
 def generate_session_trace(log: List[Dict[str, Any]]) -> str:
     """Translates the interactive lab session into standard ColliScope trace syntax."""
     lines = []
-    scope_parents = {0: 0}
-    current_scope = 0
-
     lines.append("ENTER_SCOPE 0 0")
 
     for entry in log:

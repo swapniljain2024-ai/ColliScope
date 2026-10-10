@@ -1,12 +1,11 @@
 """
 ColliScope Dashboard: Section 3 — Algorithm Comparison
-Comprehensive cross-algorithm benchmarking combining multi-metric distributions,
-head-to-head speedup ratios, and internal collision-resolution diagnostics.
+Clean, light, modern comparison of collision-resolution techniques across
+throughput, amortized latency, memory, and paired speedup ratios.
 """
 
 import streamlit as st
 import plotly.express as px
-import plotly.graph_objects as go
 import pandas as pd
 from dashboard.data_loader import (
     load_trace_summary,
@@ -15,31 +14,26 @@ from dashboard.data_loader import (
     load_svc_diagnostics
 )
 
-# Standardized algorithm color palette across all dashboard charts
+# Standard light palette
 ALGO_PALETTE = {
-    "chaining": "#2563eb",
-    "scoped_chaining": "#2563eb",
-    "Chaining / Scoped": "#2563eb",
-    "cuckoo": "#f97316",
-    "scoped_cuckoo": "#f97316",
-    "Cuckoo / Scoped": "#f97316",
-    "hopscotch": "#059669",
-    "scoped_hopscotch": "#059669",
-    "Hopscotch / Scoped": "#059669",
-    "svc_hash": "#dc2626",
-    "SVC-Hash": "#dc2626"
+    "chaining": "#4F6BED",
+    "scoped_chaining": "#4F6BED",
+    "cuckoo": "#E8A34A",
+    "scoped_cuckoo": "#E8A34A",
+    "hopscotch": "#8B79D9",
+    "scoped_hopscotch": "#8B79D9",
+    "svc_hash": "#39A985"
 }
 
 
 def render_algorithm_comparison():
     st.markdown("""
-    <div style="margin-bottom: 20px;">
-        <h2 style="margin: 0 0 6px 0; font-size: 26px; font-weight: 800;">
+    <div style="margin-bottom: 16px;">
+        <h2 style="margin: 0 0 4px 0; font-size: 24px; font-weight: 800; color: #263247;">
             ⚖️ Algorithm Comparison
         </h2>
-        <p style="margin: 0; font-size: 14.5px; opacity: 0.85;">
-            Evaluate collision-resolution approaches across throughput, amortized per-operation latency, 
-            memory footprints, and paired head-to-head speedups under both flat and nested scopes.
+        <p style="margin: 0; font-size: 14.5px; color: #68758A;">
+            Compare collision-resolution techniques across throughput, amortized latencies, and memory footprints.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -49,57 +43,40 @@ def render_algorithm_comparison():
     df_effects = load_effect_sizes()
     df_diag = load_svc_diagnostics()
 
-    # Metric mapping with rigorous labeling
+    # Metric mapping
     metrics_map = {
         "Throughput (k-ops/sec)": (
-            "tp_median", 1000.0, "Kilo-Operations / Second (Higher is better)",
-            "Total operations completed per second of execution time."
+            "tp_median", 1000.0, "k-ops/sec (Higher is better)"
         ),
-        "Amortized Lookup Latency p50 (ns)": (
-            "lookup_p50_median_ns", 1.0, "Nanoseconds / Operation (Lower is better)",
-            "Median batch latency divided by lookup operations (amortized hardware clock time per lookup)."
+        "Lookup Latency p50 (ns)": (
+            "lookup_p50_median_ns", 1.0, "ns / lookup (Lower is better)"
         ),
-        "Amortized Lookup Latency p99 (ns)": (
-            "lookup_p99_median_ns", 1.0, "Nanoseconds / Operation (Lower is better)",
-            "99th-percentile amortized lookup latency capturing tail-case hash collisions and parent-scope traversals."
+        "Lookup Latency p99 (ns)": (
+            "lookup_p99_median_ns", 1.0, "ns / lookup (Lower is better)"
         ),
-        "Amortized Insert Latency p50 (ns)": (
-            "insert_p50_median_ns", 1.0, "Nanoseconds / Operation (Lower is better)",
-            "Median batch latency divided by insert/declaration operations."
-        ),
-        "Amortized Insert Latency p99 (ns)": (
-            "insert_p99_median_ns", 1.0, "Nanoseconds / Operation (Lower is better)",
-            "99th-percentile insert latency reflecting cuckoo kick cascades or hopscotch neighborhood shifts."
+        "Insert Latency p50 (ns)": (
+            "insert_p50_median_ns", 1.0, "ns / insert (Lower is better)"
         ),
         "Peak Memory (KB)": (
-            "peak_memory_kb_median", 1.0, "Kilobytes (Lower is better)",
-            "Peak resident heap memory allocated by the symbol table structure during execution."
+            "peak_memory_kb_median", 1.0, "KB (Lower is better)"
         ),
         "Peak Load Factor": (
-            "peak_load_factor_median", 1.0, "Observed Load Factor (Ratio)",
-            "Maximum ratio of occupied slots to total allocated capacity."
+            "peak_load_factor_median", 1.0, "Observed Load Factor"
         )
     }
 
-    # Filter Controls
+    # Filter Controls (Compact Single Row)
     f_col1, f_col2, f_col3 = st.columns([2, 1, 1])
     with f_col1:
-        sel_metric_label = st.selectbox("Primary Evaluation Metric", options=list(metrics_map.keys()), index=0)
+        sel_metric_label = st.selectbox("Primary Metric:", options=list(metrics_map.keys()), index=0)
     with f_col2:
-        sel_scope = st.selectbox("Scope Mode Filter", options=["All Scopes", "Flat Only", "Nested Only"], index=0)
+        sel_scope = st.selectbox("Scope Mode:", options=["All Scopes", "Flat Only", "Nested Only"], index=0)
     with f_col3:
-        sel_category = st.selectbox("Dataset Filter", options=["All Datasets", "Synthetic Only", "Real-Source Only"], index=0)
+        sel_category = st.selectbox("Dataset:", options=["All Datasets", "Synthetic Only", "Real-Source Only"], index=0)
 
-    col_name, scale, axis_title, metric_desc = metrics_map[sel_metric_label]
+    col_name, scale, axis_title = metrics_map[sel_metric_label]
 
-    # Metric Explanation Callout
-    st.markdown(f"""
-    <div class="research-callout" style="padding: 10px 16px; margin: 8px 0 16px 0; font-size: 13px;">
-        <strong>Metric Definition:</strong> {metric_desc}
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Filter dataframe
+    # Filter Dataframe
     filtered = df_summary.copy()
     if sel_scope == "Flat Only":
         filtered = filtered[filtered["scope_mode"] == "flat"]
@@ -111,17 +88,16 @@ def render_algorithm_comparison():
     elif sel_category == "Real-Source Only":
         filtered = filtered[filtered["category"] == "real-source"]
 
-    # Algorithm multiselect with clear identities
+    # Algorithm selector
     available_algs = sorted(filtered["algorithm_name"].unique())
-    sel_algs = st.multiselect("Active Algorithm Implementations:", options=available_algs, default=available_algs)
+    sel_algs = st.multiselect("Algorithms to Display:", options=available_algs, default=available_algs)
     filtered = filtered[filtered["algorithm_name"].isin(sel_algs)]
     filtered["display_val"] = filtered[col_name] / scale
 
-    # Primary Comparative Chart
-    st.markdown(f"### {sel_metric_label} Distribution")
-    chart_fmt = st.radio("Display Format:", ["Box Plot (Spread & Outliers)", "Grouped Bar (Trace Medians)"], horizontal=True)
+    # 1. Main Comparison Chart
+    chart_col1, chart_col2 = st.columns([2.5, 1])
 
-    if chart_fmt == "Box Plot (Spread & Outliers)":
+    with chart_col1:
         fig = px.box(
             filtered,
             x="algorithm_name",
@@ -129,38 +105,36 @@ def render_algorithm_comparison():
             color="algorithm_name",
             color_discrete_map=ALGO_PALETTE,
             points="all",
-            hover_data=["trace_name", "category", "scope_mode"],
-            title=f"{sel_metric_label} Across Algorithm Implementations"
+            hover_data=["trace_name", "category", "scope_mode"]
         )
-    else:
-        fig = px.bar(
-            filtered,
-            x="algorithm_name",
-            y="display_val",
-            color="algorithm_name",
-            color_discrete_map=ALGO_PALETTE,
-            barmode="group",
-            title=f"{sel_metric_label} Across Algorithm Implementations"
+        fig.update_layout(
+            template="plotly_white",
+            paper_bgcolor="#FFFFFF",
+            plot_bgcolor="#FFFFFF",
+            font=dict(family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif", size=12, color="#263247"),
+            xaxis=dict(title="Algorithm Implementation", showgrid=False, linecolor="#E1E7F0"),
+            yaxis=dict(title=axis_title, gridcolor="#E1E7F0", linecolor="#E1E7F0"),
+            showlegend=False,
+            height=320,
+            margin=dict(l=40, r=20, t=10, b=40)
         )
+        st.plotly_chart(fig, use_container_width=True)
 
-    fig.update_layout(
-        template="plotly_white",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        xaxis_title="Algorithm Implementation",
-        yaxis_title=axis_title,
-        showlegend=False,
-        margin=dict(l=40, r=40, t=40, b=40)
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    with chart_col2:
+        st.markdown("<div style='font-size: 13px; font-weight: 700; color: #263247; margin-bottom: 6px;'>Condition Medians</div>", unsafe_allow_html=True)
+        summary_tbl = filtered.groupby("algorithm_name")[col_name].median() / scale
+        df_mini = pd.DataFrame({
+            "Algorithm": summary_tbl.index,
+            "Median": summary_tbl.values.round(1)
+        })
+        st.dataframe(df_mini, use_container_width=True, hide_index=True, height=270)
 
-    st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    # 2. Paired Head-to-Head Speedup Analysis (Integrated from SVC Analysis)
-    st.markdown("### Paired Head-to-Head Speedup Analysis (SVC-Hash vs Baselines)")
-    st.caption("Ratio of SVC-Hash throughput divided by baseline throughput on identical workloads. Values > 1.0x favor SVC-Hash.")
+    # 2. Dedicated SVC-Hash vs Baseline Speedup Summary
+    st.markdown("### SVC-Hash Head-to-Head Speedup")
+    st.caption("Ratio of SVC-Hash throughput divided by baseline throughput (values > 1.0x favor SVC-Hash).")
 
-    # Stratum selection
     if sel_scope == "Nested Only":
         stratum_name = "Nested Scope (N=18)"
         sub_paired = df_paired[df_paired["scope_mode"] == "nested"]
@@ -173,15 +147,14 @@ def render_algorithm_comparison():
 
     effects_sub = df_effects[df_effects["stratum"] == stratum_name]
 
-    # Speedup Cards
     sp_col1, sp_col2, sp_col3 = st.columns(3)
-    cards_info = [
-        (sp_col1, "cuckoo", "vs Cuckoo / Scoped Cuckoo", "#f97316"),
-        (sp_col2, "chaining", "vs Chaining / Scoped Chaining", "#2563eb"),
-        (sp_col3, "hopscotch", "vs Hopscotch / Scoped Hopscotch", "#059669")
+    cards_data = [
+        (sp_col1, "cuckoo", "vs Cuckoo / Scoped Cuckoo", "#E8A34A"),
+        (sp_col2, "chaining", "vs Chaining / Scoped Chaining", "#4F6BED"),
+        (sp_col3, "hopscotch", "vs Hopscotch / Scoped Hopscotch", "#8B79D9")
     ]
 
-    for col, bfam, label, accent_color in cards_info:
+    for col, bfam, label, accent_color in cards_data:
         with col:
             match = effects_sub[effects_sub["baseline_family"] == bfam]
             if not match.empty:
@@ -191,91 +164,67 @@ def render_algorithm_comparison():
                 r_rb = match["rank_biserial_r"].iloc[0]
 
                 if med_ratio > 1.0 and ci_low > 1.0:
-                    tag = "Statistically Significant Advantage"
-                    tag_color = "#15803d"
+                    tag = "Significant Advantage"
+                    tag_color = "#39A985"
                 elif med_ratio > 1.0:
-                    tag = "Descriptive Advantage (Non-significant)"
-                    tag_color = "#b45309"
+                    tag = "Descriptive Advantage"
+                    tag_color = "#E6B65C"
                 else:
                     tag = "Baseline Advantage"
-                    tag_color = "#b91c1c"
+                    tag_color = "#DC6B75"
 
                 st.markdown(f"""
-                <div class="research-card" style="border-top: 3px solid {accent_color}; margin-bottom: 10px;">
-                    <div style="font-weight: 700; font-size: 14.5px;">{label}</div>
-                    <div style="font-size: 26px; font-weight: 800; margin: 4px 0;">{med_ratio:.2f}x</div>
-                    <div style="font-size: 12px; opacity: 0.75;">95% Bootstrap CI: [{ci_low:.2f}x, {ci_high:.2f}x]</div>
-                    <div style="font-size: 12px; opacity: 0.75;">Rank-Biserial r: {r_rb:+.2f}</div>
-                    <div style="margin-top: 8px; font-size: 11px; font-weight: 700; color: {tag_color}; text-transform: uppercase;">
+                <div class="research-card" style="border-top: 3px solid {accent_color}; margin-bottom: 8px;">
+                    <div style="font-weight: 700; font-size: 13.5px; color: #263247;">{label}</div>
+                    <div style="font-size: 24px; font-weight: 800; color: #263247; margin: 3px 0;">{med_ratio:.2f}x</div>
+                    <div style="font-size: 12px; color: #68758A;">95% CI: [{ci_low:.2f}x, {ci_high:.2f}x] · r: {r_rb:+.2f}</div>
+                    <div style="margin-top: 6px; font-size: 11px; font-weight: 700; color: {tag_color}; text-transform: uppercase;">
                         ● {tag}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
 
-    # Speedup Ratio Distribution Box Plot
-    fig_ratio = px.box(
-        sub_paired,
-        x="baseline_family",
-        y="tp_ratio",
-        color="baseline_family",
-        points="all",
-        hover_data=["trace_name", "workload_type", "replicate"],
-        color_discrete_map={"chaining": "#2563eb", "cuckoo": "#f97316", "hopscotch": "#059669"},
-        title=f"Throughput Speedup Ratios ({stratum_name}) — Values > 1.0 favor SVC-Hash"
-    )
-    fig_ratio.add_hline(y=1.0, line_dash="dash", line_color="#ef4444", annotation_text="Parity (1.0x)", annotation_position="bottom right")
-    fig_ratio.update_layout(
-        template="plotly_white",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        xaxis_title="Baseline Algorithm Family",
-        yaxis_title="Speedup Ratio (SVC / Baseline)",
-        showlegend=False,
-        margin=dict(l=40, r=40, t=40, b=40)
-    )
-    st.plotly_chart(fig_ratio, use_container_width=True)
+    # 3. Expanders for Detailed Diagnostics and Tables
+    with st.expander("📊 Paired Speedup Distribution Chart & Detailed Breakdown", expanded=False):
+        fig_ratio = px.box(
+            sub_paired,
+            x="baseline_family",
+            y="tp_ratio",
+            color="baseline_family",
+            points="all",
+            hover_data=["trace_name", "workload_type", "replicate"],
+            color_discrete_map={"chaining": "#4F6BED", "cuckoo": "#E8A34A", "hopscotch": "#8B79D9"}
+        )
+        fig_ratio.add_hline(y=1.0, line_dash="dash", line_color="#DC6B75", annotation_text="Parity (1.0x)", annotation_position="bottom right")
+        fig_ratio.update_layout(
+            template="plotly_white",
+            paper_bgcolor="#FFFFFF",
+            plot_bgcolor="#FFFFFF",
+            font=dict(color="#263247"),
+            xaxis=dict(title="Baseline Family", linecolor="#E1E7F0"),
+            yaxis=dict(title="Speedup Ratio (SVC / Baseline)", gridcolor="#E1E7F0", linecolor="#E1E7F0"),
+            showlegend=False,
+            height=280,
+            margin=dict(l=40, r=20, t=10, b=40)
+        )
+        st.plotly_chart(fig_ratio, use_container_width=True)
 
-    st.markdown("---")
-
-    # 3. Internal Algorithm Diagnostics
-    st.markdown("### Internal Table Diagnostics")
-    st.caption("Hardware execution audit of internal relocation kicks, table capacity rebuilds, and overflow stash utilization.")
-
-    if not df_diag.empty:
-        d1, d2, d3, d4 = st.columns(4)
-        with d1:
-            st.metric("Median Relocation Kicks", f"{df_diag['svc_kicks'].median():.1f}", help="Cuckoo kick displacements executed during insertions")
-        with d2:
-            st.metric("Median Table Rebuilds", f"{df_diag['svc_rebuilds'].median():.1f}", help="Capacity resize rebuilds triggered")
-        with d3:
-            st.metric("Max Stash Usage", f"{df_diag['svc_stash_count'].max():.0f}", help="Max elements placed in the 8-slot overflow stash (0 confirms primary buckets accommodated all symbols)")
-        with d4:
-            st.metric("Tombstones Leftover", f"{df_diag['svc_tombstones'].max():.0f}", help="Tombstones remaining at trace completion (0 confirms clean deactivation sweep)")
-
-    # 4. Detailed Data Tables in Expander
-    with st.expander("📊 View Detailed Paired Performance Breakdown Table", expanded=False):
         display_pairs = sub_paired[[
             "trace_name", "scope_mode", "identifier_distribution", "workload_type",
-            "baseline_family", "svc_tp_median", "base_tp_median", "tp_diff", "tp_ratio",
-            "svc_mem_kb", "base_mem_kb", "mem_diff_kb"
+            "baseline_family", "svc_tp_median", "base_tp_median", "tp_diff", "tp_ratio"
         ]].copy()
+        st.dataframe(display_pairs, use_container_width=True, hide_index=True)
 
-        st.dataframe(
-            display_pairs,
-            column_config={
-                "trace_name": "Trace",
-                "scope_mode": "Scope",
-                "identifier_distribution": "Distribution",
-                "workload_type": "Mix",
-                "baseline_family": "Baseline",
-                "svc_tp_median": st.column_config.NumberColumn("SVC TP (op/s)", format="%.0f"),
-                "base_tp_median": st.column_config.NumberColumn("Base TP (op/s)", format="%.0f"),
-                "tp_diff": st.column_config.NumberColumn("TP Diff (SVC - Base)", format="%+.0f"),
-                "tp_ratio": st.column_config.NumberColumn("Ratio (SVC/Base)", format="%.2fx"),
-                "svc_mem_kb": st.column_config.NumberColumn("SVC Mem (KB)", format="%.1f"),
-                "base_mem_kb": st.column_config.NumberColumn("Base Mem (KB)", format="%.1f"),
-                "mem_diff_kb": st.column_config.NumberColumn("Mem Diff (KB)", format="%+.1f"),
-            },
-            use_container_width=True,
-            hide_index=True
-        )
+    with st.expander("⚙️ Internal Table Diagnostics (Kicks, Rebuilds, Stash)", expanded=False):
+        if not df_diag.empty:
+            d1, d2, d3, d4 = st.columns(4)
+            with d1:
+                st.metric("Median Relocation Kicks", f"{df_diag['svc_kicks'].median():.1f}")
+            with d2:
+                st.metric("Median Table Rebuilds", f"{df_diag['svc_rebuilds'].median():.1f}")
+            with d3:
+                st.metric("Max Stash Elements", f"{df_diag['svc_stash_count'].max():.0f}", help="0 confirms primary buckets accommodated all symbols")
+            with d4:
+                st.metric("Leftover Tombstones", f"{df_diag['svc_tombstones'].max():.0f}")
+        else:
+            st.info("Diagnostics summary data loaded from Phase 8 trace summaries.")

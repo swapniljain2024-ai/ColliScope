@@ -130,7 +130,7 @@ def test_all_dashboard_pages_render():
         "2. Interactive Symbol Table Lab",
         "3. Algorithm Comparison",
         "4. Scope & SVC-Hash",
-        "5. Experimental Results"
+        "5. Experimental Results & Provenance"
     ]
 
     for page in nav_options:

@@ -1,251 +1,186 @@
 """
 ColliScope Dashboard: Section 4 — Scope & SVC-Hash
-Comprehensive explanation of lexical scoping mechanics, multi-table wrapper degradation,
-SVC-Hash composite-key virtualization architecture, and empirical performance impact.
+Clean, visual, concise explanation of lexical scope virtualization,
+flat-versus-nested throughput degradation, and real-source cJSON results.
 """
 
 import streamlit as st
 import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
 from dashboard.data_loader import load_synthetic_analysis, load_cjson_summary
-
-# Standardized palette
-ALGO_PALETTE = {
-    "chaining": "#2563eb",
-    "Chaining": "#2563eb",
-    "cuckoo": "#f97316",
-    "Cuckoo": "#f97316",
-    "hopscotch": "#059669",
-    "Hopscotch": "#059669",
-    "svc_hash": "#dc2626",
-    "SVC-Hash": "#dc2626"
-}
 
 
 def render_scope_and_svc():
     st.markdown("""
-    <div style="margin-bottom: 20px;">
-        <h2 style="margin: 0 0 6px 0; font-size: 26px; font-weight: 800;">
-            🌲 Scope Analysis & SVC-Hash Architecture
+    <div style="margin-bottom: 16px;">
+        <h2 style="margin: 0 0 4px 0; font-size: 24px; font-weight: 800; color: #263247;">
+            🌲 Scope & SVC-Hash
         </h2>
-        <p style="margin: 0; font-size: 14.5px; opacity: 0.85;">
-            Understand the architectural divergence between classical multi-table wrapper stacks 
-            and virtualized single-table hashing under lexical nesting, variable shadowing, and scope exits.
+        <p style="margin: 0; font-size: 14.5px; color: #68758A;">
+            Evaluating lexical scope mechanics: why multi-table wrappers degrade and how SVC-Hash virtualizes scopes in a single table.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # 1. Architectural Contrast: Multi-Table vs Virtualized Table
-    st.markdown("### 1. Two Architectural Paradigms for Lexical Scoping")
-    arch_col1, arch_col2 = st.columns(2)
+    # 1. Architectural Concept Comparison (Two Crisp Cards)
+    c1, c2 = st.columns(2)
 
-    with arch_col1:
+    with c1:
         st.markdown("""
-        <div class="research-card" style="height: 100%; border-top: 3px solid #2563eb;">
-            <h4 style="margin: 0 0 8px 0; color: #2563eb; font-size: 16px;">
-                Classical Paradigm: Multi-Table Wrapper Stack
-            </h4>
-            <div style="font-size: 12.5px; opacity: 0.8; margin-bottom: 10px;">
-                <code>std::vector&lt;std::unique_ptr&lt;HashTable&gt;&gt; scope_stack;</code>
+        <div class="research-card" style="height: 100%; border-top: 3px solid #65A6D9;">
+            <div style="font-weight: 700; font-size: 14.5px; color: #263247; margin-bottom: 4px;">
+                Classical Multi-Table Wrapper
             </div>
-            <ul style="font-size: 13px; line-height: 1.6; padding-left: 18px; margin: 0;">
-                <li><strong>Enter Scope:</strong> Allocates a new heap-allocated hash table and pushes it onto the scope stack.</li>
-                <li><strong>Declaration:</strong> Inserts strictly into <code>scope_stack.back()</code>.</li>
-                <li><strong>Lookup Traversal:</strong> Probes the innermost table. On a miss, traverses backwards: <code>stack[depth-1]</code> &rarr; <code>stack[depth-2]</code> &rarr; ... &rarr; <code>stack[0]</code>.</li>
-                <li><strong>Exit Scope:</strong> Deallocates and pops the active table.</li>
-                <li><strong style="color: #ef4444;">Bottleneck:</strong> Outer-scope references incur multiple sequential table misses, causing CPU pipeline stalls and cache misses.</li>
-            </ul>
+            <div style="font-size: 12px; color: #68758A; margin-bottom: 6px;">
+                <code>std::vector&lt;std::unique_ptr&lt;HashTable&gt;&gt;</code>
+            </div>
+            <p style="font-size: 13px; color: #68758A; line-height: 1.5; margin: 0;">
+                Allocates a separate table per scope block. Outer-scope references must traverse backwards down the scope stack, incurring repeated table misses and cache line evictions.
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
-    with arch_col2:
+    with c2:
         st.markdown("""
-        <div class="research-card" style="height: 100%; border-top: 3px solid #dc2626;">
-            <h4 style="margin: 0 0 8px 0; color: #dc2626; font-size: 16px;">
-                Proposed Paradigm: SVC-Hash Virtualized Table
-            </h4>
-            <div style="font-size: 12.5px; opacity: 0.8; margin-bottom: 10px;">
-                <code>SvcHashTable (Unified 4-Way Bucketed Array + Stash)</code>
+        <div class="research-card" style="height: 100%; border-top: 3px solid #39A985;">
+            <div style="font-weight: 700; font-size: 14.5px; color: #263247; margin-bottom: 4px;">
+                Proposed SVC-Hash Architecture
             </div>
-            <ul style="font-size: 13px; line-height: 1.6; padding-left: 18px; margin: 0;">
-                <li><strong>Composite Key Hashing:</strong> Hashes the pair <code>(identifier, scope_id)</code> via 64-bit FNV-1a. Shadowed symbols naturally map to distinct candidate buckets.</li>
-                <li><strong>Candidate Buckets:</strong> Computes 2 candidate bucket indices. Each bucket holds <strong>4 slots</strong> to absorb local collisions without relocation.</li>
-                <li><strong>8-Slot Stash:</strong> Absorbs worst-case displacements when recursive kick depth reaches the limit.</li>
-                <li><strong>O(1) Scope Exit:</strong> Marks slots matching <code>scope_id</code> as tombstoned without deallocating or rebalancing tables.</li>
-                <li><strong style="color: #10b981;">Benefit:</strong> Eliminates table wrapper indirection and bounds peak memory footprint.</li>
-            </ul>
+            <div style="font-size: 12px; color: #68758A; margin-bottom: 6px;">
+                <code>Unified 4-Way Bucketed Array + Stash</code>
+            </div>
+            <p style="font-size: 13px; color: #68758A; line-height: 1.5; margin: 0;">
+                Virtualizes all scopes in one table via composite keys <code>(identifier, scope_id)</code>. Uses 4 slots per bucket and an 8-slot stash to absorb collisions, with O(1) scope-exit deactivation.
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 2. Scope Degradation Phenomenon in Synthetic Workloads
-    st.markdown("### 2. The Scope Degradation Phenomenon")
-    st.markdown("""
-    <div class="research-callout" style="margin-top: 4px; margin-bottom: 16px; font-size: 13.5px;">
-        <strong>Methodological Note:</strong> Comparing flat vs nested workloads is not an isolated single-factor causal experiment. 
-        Introducing lexical block scopes adds scope enter/exit events, introduces identifier shadowing, and limits symbol lifetimes. 
-        Observed throughput differences reflect the combined impact of scope mechanics and authentic compiler symbol lifetimes.
-    </div>
-    """, unsafe_allow_html=True)
+    # 2. Flat vs Nested Scope Performance Comparison
+    st.markdown("### Flat vs Nested Scoping Performance")
+    st.caption("Median throughput (k-ops/sec) in synthetic workloads (N=36 independent units) comparing single flat tables against nested lexical scopes.")
 
     df_synth = load_synthetic_analysis()
-
     base_fams = ["chaining", "cuckoo", "hopscotch", "svc_hash"]
     disp_names = ["Chaining", "Cuckoo", "Hopscotch", "SVC-Hash"]
 
-    scope_perf = []
+    scope_data = []
     for bfam, dname in zip(base_fams, disp_names):
         flat_tp = df_synth[(df_synth["baseline_family"] == bfam) & (df_synth["scope_mode"] == "flat")]["tp_median"].median()
         nest_tp = df_synth[(df_synth["baseline_family"] == bfam) & (df_synth["scope_mode"] == "nested")]["tp_median"].median()
-        flat_mem = df_synth[(df_synth["baseline_family"] == bfam) & (df_synth["scope_mode"] == "flat")]["peak_memory_kb_median"].median()
-        nest_mem = df_synth[(df_synth["baseline_family"] == bfam) & (df_synth["scope_mode"] == "nested")]["peak_memory_kb_median"].median()
+        pct_chg = ((nest_tp - flat_tp) / flat_tp * 100.0) if flat_tp > 0 else 0.0
 
-        pct_tp_chg = ((nest_tp - flat_tp) / flat_tp * 100.0) if flat_tp > 0 else 0.0
-
-        scope_perf.append({
+        scope_data.append({
             "Algorithm": dname,
-            "Flat Throughput (k-ops/s)": flat_tp / 1000.0,
-            "Nested Throughput (k-ops/s)": nest_tp / 1000.0,
-            "Throughput Change (%)": pct_tp_chg,
-            "Flat Memory (KB)": flat_mem,
-            "Nested Memory (KB)": nest_mem
+            "Flat TP (k-ops/s)": round(flat_tp / 1000.0, 1),
+            "Nested TP (k-ops/s)": round(nest_tp / 1000.0, 1),
+            "Change (%)": round(pct_chg, 1)
         })
 
-    df_scope = pd.DataFrame(scope_perf)
+    df_scope = pd.DataFrame(scope_data)
 
-    c1, c2 = st.columns(2)
-    with c1:
-        fig_tp = go.Figure()
-        fig_tp.add_trace(go.Bar(
+    chart_col, tbl_col = st.columns([2.2, 1])
+
+    with chart_col:
+        fig_scope = go.Figure()
+        fig_scope.add_trace(go.Bar(
             x=df_scope["Algorithm"],
-            y=df_scope["Flat Throughput (k-ops/s)"],
+            y=df_scope["Flat TP (k-ops/s)"],
             name="Flat Scope (Single Table)",
-            marker_color="#2563eb"
+            marker_color="#65A6D9"
         ))
-        fig_tp.add_trace(go.Bar(
+        fig_scope.add_trace(go.Bar(
             x=df_scope["Algorithm"],
-            y=df_scope["Nested Throughput (k-ops/s)"],
-            name="Nested Scope (Scoped Wrapper / SVC)",
-            marker_color="#f97316"
+            y=df_scope["Nested TP (k-ops/s)"],
+            name="Nested Scope (Scoped / SVC)",
+            marker_color="#4F6BED"
         ))
-        fig_tp.update_layout(
+        fig_scope.update_layout(
             barmode="group",
             template="plotly_white",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            title="Throughput Impact of Lexical Scoping (Synthetic N=36)",
-            yaxis_title="Median Throughput (k-ops/sec)",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            margin=dict(l=40, r=40, t=50, b=40)
+            paper_bgcolor="#FFFFFF",
+            plot_bgcolor="#FFFFFF",
+            font=dict(family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif", size=12, color="#263247"),
+            yaxis=dict(title="Throughput (k-ops/sec)", gridcolor="#E1E7F0", linecolor="#E1E7F0"),
+            xaxis=dict(linecolor="#E1E7F0"),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title=None),
+            height=300,
+            margin=dict(l=40, r=20, t=20, b=30)
         )
-        st.plotly_chart(fig_tp, use_container_width=True)
+        st.plotly_chart(fig_scope, use_container_width=True)
 
-    with c2:
-        fig_mem = go.Figure()
-        fig_mem.add_trace(go.Bar(
-            x=df_scope["Algorithm"],
-            y=df_scope["Flat Memory (KB)"],
-            name="Flat Scope Memory (KB)",
-            marker_color="#059669"
-        ))
-        fig_mem.add_trace(go.Bar(
-            x=df_scope["Algorithm"],
-            y=df_scope["Nested Memory (KB)"],
-            name="Nested Scope Memory (KB)",
-            marker_color="#d97706"
-        ))
-        fig_mem.update_layout(
-            barmode="group",
-            template="plotly_white",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            title="Peak Memory Impact of Lexical Scoping",
-            yaxis_title="Peak Memory (KB) [Lower is better]",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            margin=dict(l=40, r=40, t=50, b=40)
+    with tbl_col:
+        st.markdown("<div style='font-size: 13px; font-weight: 700; color: #263247; margin-bottom: 6px;'>Scope Degradation</div>", unsafe_allow_html=True)
+        st.dataframe(
+            df_scope[["Algorithm", "Nested TP (k-ops/s)", "Change (%)"]],
+            column_config={
+                "Algorithm": "Algorithm",
+                "Nested TP (k-ops/s)": st.column_config.NumberColumn("Nested TP", format="%.1f"),
+                "Change (%)": st.column_config.NumberColumn("Degradation", format="%+.1f%%"),
+            },
+            use_container_width=True,
+            hide_index=True,
+            height=250
         )
-        st.plotly_chart(fig_mem, use_container_width=True)
 
-    # Degradation Table
-    st.dataframe(
-        df_scope,
-        column_config={
-            "Algorithm": "Algorithm Family",
-            "Flat Throughput (k-ops/s)": st.column_config.NumberColumn("Flat TP (k-ops/s)", format="%.1f"),
-            "Nested Throughput (k-ops/s)": st.column_config.NumberColumn("Nested TP (k-ops/s)", format="%.1f"),
-            "Throughput Change (%)": st.column_config.NumberColumn("Change (%)", format="%+.1f%%"),
-            "Flat Memory (KB)": st.column_config.NumberColumn("Flat Mem (KB)", format="%.1f"),
-            "Nested Memory (KB)": st.column_config.NumberColumn("Nested Mem (KB)", format="%.1f")
-        },
-        use_container_width=True,
-        hide_index=True
-    )
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    # 3. Real-Source Case Study Inversion (cJSON v1.7.18)
-    st.markdown("### 3. Real-Source Case Study Inversion (cJSON AST)")
-    st.caption("Demonstrating how authentic compiler AST traces invert performance rankings relative to flat synthetic benchmarks.")
+    # 3. Real-Source Case Study (cJSON v1.7.18) Inversion Result
+    st.markdown("### Authentic Nested AST Case Study (cJSON v1.7.18)")
+    st.caption("Authentic C code containing 1,002 operations and 128 lexical scopes extracted from cJSON AST.")
 
     df_cjson = load_cjson_summary()
     cjson_nest = df_cjson[df_cjson["scope_mode"] == "nested"].sort_values("throughput_ops_sec", ascending=False)
-    cjson_flat = df_cjson[df_cjson["scope_mode"] == "flat"].sort_values("throughput_ops_sec", ascending=False)
 
-    rc1, rc2 = st.columns([3, 2])
-    with rc1:
+    cj_col1, cj_col2 = st.columns([1.5, 2])
+
+    with cj_col1:
+        st.markdown("""
+        <div class="research-card" style="height: 100%;">
+            <div style="font-weight: 700; font-size: 14px; color: #39A985; margin-bottom: 6px;">Authentic Nested AST Leader</div>
+            <div style="font-size: 26px; font-weight: 800; color: #263247; margin-bottom: 4px;">734.9k op/s</div>
+            <div style="font-size: 12.5px; color: #68758A; line-height: 1.5;">
+                • <strong>1.76x</strong> over Scoped Chaining (418.4k)<br>
+                • <strong>2.64x</strong> over Scoped Hopscotch (278.5k)<br>
+                • <strong>3.71x</strong> over Scoped Cuckoo (197.9k)<br>
+                • Peak memory: <strong>8.0 KB</strong> (lowest of all)
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with cj_col2:
         fig_cj = go.Figure()
         fig_cj.add_trace(go.Bar(
             x=cjson_nest["algorithm_name"],
             y=cjson_nest["throughput_ops_sec"] / 1000.0,
-            name="Authentic Nested AST (128 Scopes)",
-            marker_color="#dc2626"
-        ))
-        fig_cj.add_trace(go.Bar(
-            x=cjson_flat["algorithm_name"],
-            y=cjson_flat["throughput_ops_sec"] / 1000.0,
-            name="Flat Compilation Unit",
-            marker_color="#2563eb"
+            marker_color=["#39A985", "#4F6BED", "#8B79D9", "#E8A34A"]
         ))
         fig_cj.update_layout(
-            barmode="group",
             template="plotly_white",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            title="cJSON Throughput: Authentic Nested vs Flat Compilation Unit",
-            yaxis_title="Throughput (kilo-ops / sec)",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            margin=dict(l=40, r=40, t=50, b=40)
+            paper_bgcolor="#FFFFFF",
+            plot_bgcolor="#FFFFFF",
+            font=dict(family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif", size=12, color="#263247"),
+            yaxis=dict(title="Throughput (k-ops/sec)", gridcolor="#E1E7F0", linecolor="#E1E7F0"),
+            xaxis=dict(linecolor="#E1E7F0"),
+            height=200,
+            margin=dict(l=40, r=20, t=10, b=30)
         )
         st.plotly_chart(fig_cj, use_container_width=True)
 
-    with rc2:
+    # 4. Expanders for Deep Dives and Caveats
+    with st.expander("🔬 Scope Degradation Mechanism & Cache Dynamics", expanded=False):
         st.markdown("""
-        <div class="research-card" style="height: 100%;">
-            <h4 style="margin-top: 0; color: #dc2626; font-size: 15px;">cJSON Nested Empirical Inversion</h4>
-            <ul style="font-size: 13px; line-height: 1.6; padding-left: 18px; margin: 0;">
-                <li><strong>SVC-Hash Leads Authentic Nested Code:</strong> Reaches <strong>734.9k op/s</strong> on real Clang AST traces.</li>
-                <li><strong>1.76x Speedup over Scoped Chaining:</strong> 734.9k vs 418.4k op/s.</li>
-                <li><strong>2.64x Speedup over Scoped Hopscotch:</strong> 734.9k vs 278.5k op/s.</li>
-                <li><strong>3.71x Speedup over Scoped Cuckoo:</strong> 734.9k vs 197.9k op/s.</li>
-                <li><strong>Minimal Memory Footprint:</strong> Requires only <strong>8.0 KB</strong> heap memory compared to 10.9 KB for Scoped Chaining.</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
+        **Why Multi-Table Wrappers Degrade by 61%–64%:**
+        1. **Sequential Miss Cascades:** An identifier declared in outer Scope 0 but referenced inside Scope 3 triggers 3 successive table misses (`Scope 3 -> Scope 2 -> Scope 1 -> Scope 0`).
+        2. **Heap Indirection:** Multiple small hash tables cause scattered heap allocations, destroying hardware prefetcher efficiency.
+        3. **SVC-Hash Virtualization:** Directly hashes `(identifier, active_scope)` into 2 candidate buckets. If missing, hashes parent scope `(identifier, parent_scope)`. Bounded by 4 slots per bucket, preventing full-table linear scans.
+        """)
 
-    st.markdown("---")
-
-    # 4. Objective Boundary Conditions & Empirical Limitations
-    st.markdown("### 4. Objective Assessment & Scientific Boundary Conditions")
-    st.markdown("""
-    <div class="research-callout-warning" style="margin: 0; font-size: 13.5px; line-height: 1.6;">
-        <strong>Scientific Limitations:</strong><br>
-        • <strong>Not Universally Superior:</strong> On flat code with Zipfian reference distributions, Separate Chaining (1.82M op/s) 
-        and Hopscotch (1.84M op/s) outperform SVC-Hash (1.29M op/s). Closed addressing retains hot symbols in the CPU L1 cache line without hash recomputation.<br>
-        • <strong>Single Real-World Project:</strong> The cJSON case study evaluates <strong>ONE software codebase</strong> under 
-        <strong>TWO scope representations</strong> (flat translation unit vs authentic AST block scopes). It provides descriptive case-study evidence, not inferential proof across all programming languages.<br>
-        • <strong>No Constant-Time Guarantees:</strong> While lookups check at most candidate slots along the parent scope chain, 
-        nested lookup depth remains bounded by the active lexical block depth (max depth 6 in cJSON).
-    </div>
-    """, unsafe_allow_html=True)
+    with st.expander("📐 Scientific Boundary Conditions & Limitations", expanded=False):
+        st.markdown("""
+        **Objective Assessment:**
+        - **Flat Code Advantage of Baselines:** On flat code without scoping, Separate Chaining (1.82M op/s) and Hopscotch (1.84M op/s) lead due to L1 cache residency for frequently referenced symbols. SVC-Hash is optimized specifically for lexically scoped languages.
+        - **Single Real-Source Codebase:** The cJSON benchmark evaluates **one software codebase** under **two representations** (flat vs AST). It serves as descriptive case-study evidence.
+        - **Lookup Depth:** Nested lookups remain bounded by the active lexical block depth (maximum depth 6 in cJSON).
+        """)
