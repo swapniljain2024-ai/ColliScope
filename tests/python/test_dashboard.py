@@ -88,56 +88,38 @@ def test_cjson_case_study_integrity():
 
 
 def test_views_importable():
-    """Verify all 11 page view modules can be imported cleanly."""
+    """Verify all 5 main section view modules can be imported cleanly."""
     from dashboard.views.overview import render_overview
-    from dashboard.views.dataset_explorer import render_dataset_explorer
-    from dashboard.views.workload_explorer import render_workload_explorer
-    from dashboard.views.algorithm_comparison import render_algorithm_comparison
-    from dashboard.views.svc_analysis import render_svc_analysis
-    from dashboard.views.scope_analysis import render_scope_analysis
-    from dashboard.views.statistical_evidence import render_statistical_evidence
-    from dashboard.views.cjson_case_study import render_cjson_case_study
-    from dashboard.views.trace_explorer import render_trace_explorer
-    from dashboard.views.methodology import render_methodology
     from dashboard.views.interactive_lab import render_interactive_lab
+    from dashboard.views.algorithm_comparison import render_algorithm_comparison
+    from dashboard.views.scope_and_svc import render_scope_and_svc
+    from dashboard.views.experimental_results import render_experimental_results
 
     assert callable(render_overview)
-    assert callable(render_dataset_explorer)
-    assert callable(render_workload_explorer)
-    assert callable(render_algorithm_comparison)
-    assert callable(render_svc_analysis)
-    assert callable(render_scope_analysis)
-    assert callable(render_statistical_evidence)
-    assert callable(render_cjson_case_study)
-    assert callable(render_trace_explorer)
-    assert callable(render_methodology)
     assert callable(render_interactive_lab)
+    assert callable(render_algorithm_comparison)
+    assert callable(render_scope_and_svc)
+    assert callable(render_experimental_results)
 
 
 def test_all_dashboard_pages_render():
-    """Verify that every single dashboard page renders without unhandled exceptions."""
+    """Verify that every single dashboard section renders without unhandled exceptions."""
     from streamlit.testing.v1 import AppTest
 
     at = AppTest.from_file(os.path.join(REPO_ROOT, "dashboard", "app.py"), default_timeout=30)
     at.run()
-    assert not at.exception, f"Overview page raised exception: {at.exception}"
+    assert not at.exception, f"Overview section raised exception: {at.exception}"
 
     nav_options = [
         "1. Overview",
-        "2. Dataset Explorer",
-        "3. Workload Explorer",
-        "4. Algorithm Comparison",
-        "5. SVC-Hash Analysis",
-        "6. Scope Analysis",
-        "7. Statistical Evidence",
-        "8. Real-Source Case Study",
-        "9. Trace / Operation Explorer",
-        "10. Methodology / About",
-        "11. Interactive Symbol Table Lab"
+        "2. Interactive Symbol Table Lab",
+        "3. Algorithm Comparison",
+        "4. Scope & SVC-Hash",
+        "5. Experimental Results"
     ]
 
     for page in nav_options:
         at.sidebar.radio[0].set_value(page)
         at.run()
-        assert not at.exception, f"Page '{page}' raised exception: {at.exception}"
+        assert not at.exception, f"Section '{page}' raised exception: {at.exception}"
 

@@ -1,6 +1,7 @@
 """
 ColliScope Research Dashboard — Main Application Entry Point
 Workload-Aware Evaluation and Scope-Aware Cuckoo Hashing for Compiler Symbol Tables
+Redesigned 5-Section Architecture for Faculty Demonstration & Research Exploration.
 """
 
 import sys
@@ -14,16 +15,10 @@ if REPO_ROOT not in sys.path:
 import streamlit as st
 
 from dashboard.views.overview import render_overview
-from dashboard.views.dataset_explorer import render_dataset_explorer
-from dashboard.views.workload_explorer import render_workload_explorer
-from dashboard.views.algorithm_comparison import render_algorithm_comparison
-from dashboard.views.svc_analysis import render_svc_analysis
-from dashboard.views.scope_analysis import render_scope_analysis
-from dashboard.views.statistical_evidence import render_statistical_evidence
-from dashboard.views.cjson_case_study import render_cjson_case_study
-from dashboard.views.trace_explorer import render_trace_explorer
-from dashboard.views.methodology import render_methodology
 from dashboard.views.interactive_lab import render_interactive_lab
+from dashboard.views.algorithm_comparison import render_algorithm_comparison
+from dashboard.views.scope_and_svc import render_scope_and_svc
+from dashboard.views.experimental_results import render_experimental_results
 
 
 def main():
@@ -34,7 +29,7 @@ def main():
         initial_sidebar_state="expanded"
     )
 
-    # Custom styling for research aesthetic (fully compatible with light and dark themes)
+    # Scientific Computing Research Aesthetic (Theme-Adaptive)
     st.markdown("""
     <style>
         /* Base typography & layout adjustments */
@@ -74,16 +69,17 @@ def main():
 
         /* Sidebar radio navigation — crisp text in both light and dark modes */
         section[data-testid="stSidebar"] div[data-testid="stRadio"] label {
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-radius: 6px;
+            margin-bottom: 2px;
             transition: background-color 0.15s ease;
         }
         section[data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
             background-color: rgba(128, 128, 128, 0.12);
         }
         section[data-testid="stSidebar"] div[data-testid="stRadio"] label p {
-            font-weight: 500 !important;
-            font-size: 13.5px !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
             color: var(--text-color) !important;
         }
 
@@ -120,88 +116,72 @@ def main():
             margin: 14px 0;
             color: var(--text-color);
         }
-        .nav-category-badge {
-            font-size: 10.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(128, 128, 128, 0.15);
-            color: var(--text-color);
-            margin-bottom: 6px;
-            display: inline-block;
-        }
     </style>
     """, unsafe_allow_html=True)
 
-    # Sidebar Header & Navigation
+    # Sidebar Header & Branding
     st.sidebar.markdown("""
-    <div style="padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(128,128,128,0.2);">
-        <h2 style="margin: 0; font-size: 20px; font-weight: 800;">🔬 ColliScope</h2>
-        <span style="font-size: 12px; opacity: 0.7; font-weight: 500;">Symbol Table Research & Demo Tool</span>
+    <div style="padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+        <h2 style="margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -0.02em;">🔬 ColliScope</h2>
+        <span style="font-size: 12px; opacity: 0.75; font-weight: 500;">Compiler Symbol Table Research</span>
     </div>
     """, unsafe_allow_html=True)
 
+    # Streamlined 5-Section Navigation
     nav_options = [
         "1. Overview",
-        "2. Dataset Explorer",
-        "3. Workload Explorer",
-        "4. Algorithm Comparison",
-        "5. SVC-Hash Analysis",
-        "6. Scope Analysis",
-        "7. Statistical Evidence",
-        "8. Real-Source Case Study",
-        "9. Trace / Operation Explorer",
-        "10. Methodology / About",
-        "11. Interactive Symbol Table Lab"
+        "2. Interactive Symbol Table Lab",
+        "3. Algorithm Comparison",
+        "4. Scope & SVC-Hash",
+        "5. Experimental Results"
     ]
+
+    # Synchronize session state navigation
+    if "nav_selection" not in st.session_state:
+        st.session_state["nav_selection"] = nav_options[0]
+    elif st.session_state["nav_selection"] not in nav_options:
+        for opt in nav_options:
+            if st.session_state["nav_selection"] in opt or opt in st.session_state["nav_selection"]:
+                st.session_state["nav_selection"] = opt
+                break
+        else:
+            st.session_state["nav_selection"] = nav_options[0]
+
+    current_idx = nav_options.index(st.session_state["nav_selection"])
 
     selected_page = st.sidebar.radio(
         "Navigation",
         options=nav_options,
-        index=0,
+        index=current_idx,
         label_visibility="collapsed"
     )
+    st.session_state["nav_selection"] = selected_page
 
-    # Sidebar Provenance Metadata
+    # Minimal secondary information in sidebar
     st.sidebar.markdown("---")
-    st.sidebar.markdown("""
-    <div style="font-size: 11px; opacity: 0.75; line-height: 1.5;">
-        <strong>Authoritative Dataset:</strong> Phase 7 Campaign<br>
-        <strong>Statistical Suite:</strong> Phase 8 Locked<br>
-        <strong>Traces:</strong> 38 (36 Synthetic + 2 cJSON)<br>
-        <strong>Trials:</strong> 1,520 Measured (+456 Warmups)<br>
-        <strong>Timer:</strong> Windows QPC (10 MHz Monotonic)<br>
-        <strong>Compiler:</strong> GCC 8.1.0 (-O3)
-    </div>
-    """, unsafe_allow_html=True)
+    with st.sidebar.expander("ℹ️ Experiment Specs & Provenance", expanded=False):
+        st.markdown("""
+        <div style="font-size: 11.5px; opacity: 0.85; line-height: 1.6;">
+            <strong>Authoritative Traces:</strong> 38 (36 Synthetic + 2 cJSON)<br>
+            <strong>Algorithm Families:</strong> 4 (Chaining, Cuckoo, Hopscotch, SVC)<br>
+            <strong>Total Executions:</strong> 1,976 (1,520 Measured + 456 Warmups)<br>
+            <strong>Hardware Timer:</strong> Windows QPC (10.0 MHz Monotonic)<br>
+            <strong>Compiler:</strong> MinGW GCC 8.1.0 (-O3 -std=c++17)
+        </div>
+        """, unsafe_allow_html=True)
 
-    # Route to selected page
+    # Route to selected 5 sections
     if selected_page == "1. Overview":
         render_overview()
-    elif selected_page == "2. Dataset Explorer":
-        render_dataset_explorer()
-    elif selected_page == "3. Workload Explorer":
-        render_workload_explorer()
-    elif selected_page == "4. Algorithm Comparison":
-        render_algorithm_comparison()
-    elif selected_page == "5. SVC-Hash Analysis":
-        render_svc_analysis()
-    elif selected_page == "6. Scope Analysis":
-        render_scope_analysis()
-    elif selected_page == "7. Statistical Evidence":
-        render_statistical_evidence()
-    elif selected_page == "8. Real-Source Case Study":
-        render_cjson_case_study()
-    elif selected_page == "9. Trace / Operation Explorer":
-        render_trace_explorer()
-    elif selected_page == "10. Methodology / About":
-        render_methodology()
-    elif selected_page == "11. Interactive Symbol Table Lab":
+    elif selected_page == "2. Interactive Symbol Table Lab":
         render_interactive_lab()
+    elif selected_page == "3. Algorithm Comparison":
+        render_algorithm_comparison()
+    elif selected_page == "4. Scope & SVC-Hash":
+        render_scope_and_svc()
+    elif selected_page == "5. Experimental Results":
+        render_experimental_results()
 
 
 if __name__ == "__main__":
     main()
-

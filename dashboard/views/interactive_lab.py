@@ -106,7 +106,7 @@ def render_interactive_lab():
     init_lab_session()
 
     st.markdown("""
-    <div class="research-card" style="border-left: 5px solid #3b82f6; margin-bottom: 20px;">
+    <div class="research-card" style="border-left: 5px solid #3b82f6; margin-bottom: 14px;">
         <h2 style="margin: 0 0 6px 0;">🧪 Interactive Symbol Table Lab</h2>
         <p style="margin: 0; font-size: 14.5px; opacity: 0.9;">
             <strong>Live Compiler Demonstration:</strong> Execute compiler symbol-table operations 
@@ -114,6 +114,9 @@ def render_interactive_lab():
             and interactively inspect lexical scope trees, bucket slot occupancy, cuckoo kick chains, 
             shadowing resolution, and native C++ engine execution.
         </p>
+    </div>
+    <div class="research-callout" style="padding: 8px 14px; margin: 0 0 18px 0; font-size: 12.5px;">
+        <strong>Architecture Distinction:</strong> The Python interactive simulator is an educational model designed for visualization of scope trees, slot migrations, and kick displacement chains. The compiled native C++ binary (<code>colliscope_bench.exe</code>) is the authoritative benchmark engine.
     </div>
     """, unsafe_allow_html=True)
 
@@ -297,7 +300,7 @@ def render_interactive_lab():
                         st.error(f"Execution returned error code {res.get('returncode')}")
                         st.code(res.get("stderr", "") or res.get("stdout", ""))
                 else:
-                    st.warning(f"C++ binary status: {res.get('error')}")
+                    st.warning(f"⚠️ Native C++ binary unavailable: {res.get('error')}. The educational simulator continues functioning independently.")
 
 
 def execute_lab_op(op: str, identifier: Optional[str], type_id: Optional[int], desc: str):
